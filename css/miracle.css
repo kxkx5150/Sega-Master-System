@@ -1,0 +1,42 @@
+/*
+Miracle: a JavaScript Sega Master System emulator.
+By Matt Godbolt <matt@godbolt.org>
+Based heavily on JSSpeccy which is Copyright (C) 2008 Matthew Westcott
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Contact details: Matt Godbolt <matt@godbolt.org>
+JSSpeccy contact details: Matthew Westcott <matthew@west.co.tt
+*/
+html{
+    margin: 0;
+    padding: 0;
+}
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    color: #ffffff;
+    font-family: arial, tahoma;
+    font-size: 13px;
+}
+#screen {
+    width: 256px;
+    height: 192px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
