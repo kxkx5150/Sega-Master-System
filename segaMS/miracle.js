@@ -8,7 +8,7 @@ var actx = new AudioContext();
 
 const fps = 60;
 const cpuHz = 3.58 * 1000 * 1000;
-const tstatesPerHblank = Math.ceil(cpuHz / 313 * fps) | 0;
+const tstatesPerHblank = Math.ceil(cpuHz / (313 * fps)) | 0;
 const targetTimeout = 1000 / fps;
 var lastFrame = null;
 
@@ -16,30 +16,16 @@ const mem = new RAM();
 const io = new IO();
 const timer = new TIMER();
 const soundChip = audio_init();
-
-var romBanks = [];
-var pages =  new Uint8Array(3);
-var romPageMask = 0;
-
+const rom = new ROM();
 
 function miracle_init() {
   z80_init();
   vdp_init();
   miracle_reset();
 }
-function loadRom(rom) {
+function loadRom(bin) {
   miracle_init();
-  var numRomBanks = rom.length / 0x4000;
-  for (var i = 0; i < numRomBanks; i++) {
-    romBanks[i] = new Uint8Array(0x4000);
-    for (var j = 0; j < 0x4000; j++) {
-      romBanks[i][j] = rom.charCodeAt(i * 0x4000 + j);
-    }
-  }
-  for (var i = 0; i < 3; i++) {
-    pages[i] = i % numRomBanks;
-  }
-  romPageMask = (numRomBanks - 1) | 0;
+  rom.load(bin)
   audio_enable(true);
   run();
 }
@@ -77,12 +63,12 @@ function line() {
   return false;
 }
 function miracle_reset() {
-  pages.fill(0)
   z80_reset();
   vdp_reset();
   audio_reset();
   io.reset();
   mem.reset();
+  rom.reset();
 }
 
 
