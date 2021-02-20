@@ -1,9 +1,12 @@
+const segams = new SEGAMS("output");
+const that = segams;
+
 document.getElementById("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
   var fileReader = new FileReader();
   fileReader.onload = function () {
-    loadRom(this.result);
+    segams.loadRom(this.result);
   };
   fileReader.readAsBinaryString(file);
 });

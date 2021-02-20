@@ -1,5 +1,6 @@
 class RAM {
-  constructor() {
+  constructor(core) {
+    this.core = core;
     this.ram = new Uint8Array(0x2000);
     this.cartridgeRam = new Uint8Array(0x8000);
     this.ramSelectRegister = 0;
@@ -11,11 +12,11 @@ class RAM {
     switch (page) {
       case 0:
         if (address < 0x0400) {
-          return rom.romBanks[0][address];
+          return this.core.rom.romBanks[0][address];
         }
-        return rom.romBanks[rom.pages[0]][address];
+        return this.core.rom.romBanks[this.core.rom.pages[0]][address];
       case 1:
-        return rom.romBanks[rom.pages[1]][address];
+        return this.core.rom.romBanks[this.core.rom.pages[1]][address];
       case 2:
         switch (this.ramSelectRegister & 12) {
           default:
@@ -25,7 +26,7 @@ class RAM {
           case 12:
             return this.cartridgeRam[address + 0x4000];
         }
-        return rom.romBanks[rom.pages[2]][address];
+        return this.core.rom.romBanks[this.core.rom.pages[2]][address];
       case 3:
         return this.ram[address & 0x1fff];
     }
@@ -39,16 +40,16 @@ class RAM {
           this.ramSelectRegister = value;
           break;
         case 0xfffd:
-          value &= rom.romPageMask;
-          rom.pages[0] = value;
+          value &= this.core.rom.romPageMask;
+          this.core.rom.pages[0] = value;
           break;
         case 0xfffe:
-          value &= rom.romPageMask;
-          rom.pages[1] = value;
+          value &= this.core.rom.romPageMask;
+          this.core.rom.pages[1] = value;
           break;
         case 0xffff:
-          value &= rom.romPageMask;
-          rom.pages[2] = value;
+          value &= this.core.rom.romPageMask;
+          this.core.rom.pages[2] = value;
           break;
         default:
           throw "zoiks";

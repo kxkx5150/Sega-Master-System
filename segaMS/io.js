@@ -1,5 +1,6 @@
 class IO {
-  constructor(){
+  constructor(core){
+    this.core = core;
     this.inputMode = 7;
     this.joystick = 0xffff;
   }
@@ -45,7 +46,7 @@ class IO {
         break;
       case 0x7e:
       case 0x7f:
-        soundChip.poke(val);
+        this.core.soundChip.poke(val);
         break;
       case 0xbd:
       case 0xbf:

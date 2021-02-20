@@ -1,3 +1,4 @@
+
 function byteTable(values) {
     var result = new Uint8Array(values.length);
     var i;
@@ -59,19 +60,19 @@ function z80_interrupt() {
     if( z80.halted ) { z80.pc++; z80.pc &= 0xffff; z80.halted = false; }
     z80.iff1=z80.iff2=0;
     z80.sp = (z80.sp - 1) & 0xffff;
-    mem.writebyte( z80.sp, (z80.pc >> 8) );
+    that.mem.writebyte( z80.sp, (z80.pc >> 8) );
     z80.sp = (z80.sp - 1) & 0xffff;
-    mem.writebyte( z80.sp, (z80.pc & 0xff) );
+    that.mem.writebyte( z80.sp, (z80.pc & 0xff) );
     z80.r = (z80.r+1) & 0x7f;
     switch(z80.im) {
-      case 0: z80.pc = 0x0038; tstates+=12; break;
-      case 1: z80.pc = 0x0038; tstates+=13; break;
+      case 0: z80.pc = 0x0038; that.tstates+=12; break;
+      case 1: z80.pc = 0x0038; that.tstates+=13; break;
       case 2:
     {
       var inttemp=(0x100*z80.i)+0xff;
-      var pcl = mem.readbyte(inttemp++); inttemp &= 0xfff; var pch = mem.readbyte(inttemp);
+      var pcl = that.mem.readbyte(inttemp++); inttemp &= 0xfff; var pch = that.mem.readbyte(inttemp);
       z80.pc = pcl | (pch << 8);
-      tstates+=19;
+      that.tstates+=19;
       break;
     }
       default:
@@ -84,8 +85,8 @@ function z80_instruction_hook() {}
 function z80_nmi() {
   z80.iff1 = 0;
   z80.sp = (z80.sp - 1) & 0xffff;
-  mem.writebyte( z80.sp, (z80.pc >> 8) );
+  that.mem.writebyte( z80.sp, (z80.pc >> 8) );
   z80.sp = (z80.sp - 1) & 0xffff;
-  mem.writebyte( z80.sp, (z80.pc & 0xff) );
-  tstates += 11; z80.pc = 0x0066;
+  that.mem.writebyte( z80.sp, (z80.pc & 0xff) );
+  that.tstates += 11; z80.pc = 0x0066;
 }
