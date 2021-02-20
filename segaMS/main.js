@@ -23,7 +23,6 @@ class SEGAMS {
     this.mem = new RAM(this);
     this.rom = new ROM(this);
     this.soundChip = null;
-    this.cpu = new Z80(this,this.mem);
 
 
   }
@@ -99,7 +98,6 @@ class SEGAMS {
   }
   miracle_reset() {
     z80_reset();
-    this.cpu.reset();
     vdp_reset();
     this.audio_reset();
     this.io.reset();
