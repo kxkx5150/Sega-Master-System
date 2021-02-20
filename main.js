@@ -3,11 +3,7 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
   if (!file) return;
   var fileReader = new FileReader();
   fileReader.onload = function () {
-    z80_init();
-    miracle_init();
-    miracle_reset();
     loadRom(this.result);
-    start();
   };
   fileReader.readAsBinaryString(file);
 });

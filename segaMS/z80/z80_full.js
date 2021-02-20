@@ -59,9 +59,9 @@ function z80_interrupt() {
     if( z80.halted ) { z80.pc++; z80.pc &= 0xffff; z80.halted = false; }
     z80.iff1=z80.iff2=0;
     z80.sp = (z80.sp - 1) & 0xffff;
-    writebyte( z80.sp, (z80.pc >> 8) );
+    mem.writebyte( z80.sp, (z80.pc >> 8) );
     z80.sp = (z80.sp - 1) & 0xffff;
-    writebyte( z80.sp, (z80.pc & 0xff) );
+    mem.writebyte( z80.sp, (z80.pc & 0xff) );
     z80.r = (z80.r+1) & 0x7f;
     switch(z80.im) {
       case 0: z80.pc = 0x0038; tstates+=12; break;
@@ -69,7 +69,7 @@ function z80_interrupt() {
       case 2:
     {
       var inttemp=(0x100*z80.i)+0xff;
-      var pcl = readbyte(inttemp++); inttemp &= 0xfff; var pch = readbyte(inttemp);
+      var pcl = mem.readbyte(inttemp++); inttemp &= 0xfff; var pch = mem.readbyte(inttemp);
       z80.pc = pcl | (pch << 8);
       tstates+=19;
       break;
@@ -84,8 +84,8 @@ function z80_instruction_hook() {}
 function z80_nmi() {
   z80.iff1 = 0;
   z80.sp = (z80.sp - 1) & 0xffff;
-  writebyte( z80.sp, (z80.pc >> 8) );
+  mem.writebyte( z80.sp, (z80.pc >> 8) );
   z80.sp = (z80.sp - 1) & 0xffff;
-  writebyte( z80.sp, (z80.pc & 0xff) );
+  mem.writebyte( z80.sp, (z80.pc & 0xff) );
   tstates += 11; z80.pc = 0x0066;
 }

@@ -173,23 +173,6 @@ function dumpSprites() {
     }
 }
 
-function dumpBackground() {
-    for (var y = 0; y < 224; y += 8) {
-        var effectiveLine = y + vdp_regs[9];
-        if (effectiveLine >= 224) {
-            effectiveLine -= 224;
-        }
-        var nameAddr = ((vdp_regs[2] << 10) & 0x3800) + (effectiveLine >>> 3) * 64;
-        var dumpage = "";
-        for (var i = 0; i < 32; i++) {
-            var tileData = vram[nameAddr + i * 2] | (vram[nameAddr + i * 2 + 1] << 8);
-            var tileNum = tileData & 511;
-            dumpage += hexword(tileNum);
-        }
-        console.log(dumpage);
-    }
-}
-
 function showAllTiles() {
     var tile = 0;
     for (var y = 0; y < 224; y += 8) {
