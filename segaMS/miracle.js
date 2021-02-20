@@ -52,10 +52,14 @@ function run() {
 function line() {
   event_next_event = tstatesPerHblank;
   tstates -= tstatesPerHblank;
+
   z80_do_opcodes(cycleCallback);
+
   var vdp_status = vdp_hblank();
   var irq = vdp_status & 3;
+
   z80_set_irq(irq);
+  
   if (vdp_status & 4) {
     ctx.putImageData(imageData, 0, 0);
     return true;
@@ -83,9 +87,9 @@ function miracle_reset() {
 
 
 function audio_init() {
-  var jsAudioNode = actx.createScriptProcessor(1024, 0, 1);
-  jsAudioNode.onaudioprocess = pumpAudio;
-  jsAudioNode.connect(actx.destination, 0, 0);
+  var sp = actx.createScriptProcessor(1024, 0, 1);
+  sp.onaudioprocess = pumpAudio;
+  sp.connect(actx.destination, 0, 0);
   return new SoundChip(actx.sampleRate, cpuHz);
 }
 function cycleCallback(tstates) {
