@@ -1,16 +1,62 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function z80_do_opcodes(cycleCallback,onstep) {
+  while (that.tstates < that.event_next_event || onstep) {
+    if (z80.irq_pending && z80.iff1) {
+      if (z80.irq_suppress) {
+        z80.irq_suppress = false;
+      } else {
+        z80.irq_suppress = true;
+        z80_interrupt();
+      }
+    }
+    var oldTstates = that.tstates;
+    that.tstates += 4;
+
+    z80.r = (z80.r + 1) & 0x7f;
+    var opcode = that.mem.readbyte(z80.pc);
+    if(onstep)this.showInfo(z80.pc,opcode)
+    z80_instruction_hook(z80.pc, opcode);
+    z80.pc = (z80.pc + 1) & 0xffff;
+    
+    z80_base_ops(opcode);
+    cycleCallback(that.tstates + oldTstates);
+
+    if(onstep)break;
+  }
+}
+function showInfo(pc,opcode){
+  let rval = this.Instructions(opcode)
+  console.log("");
+  console.log("PC      : " + this.toHex(pc));
+  console.log("OPCODE  : "+rval.opCode);
+  console.log("OPHEX   : "+this.toHex(opcode));
+}
+function toHex (v) {
+  return '0x' + (('0000' + v.toString(16).toUpperCase()).substr(-4));
+}
 function sign_extend(v) {
   return v < 128 ? v : v - 256;
 }
-function z80_defaults(ops) {
-  for (var i = 0; i < 256; ++i) {
-    if (!ops[i]) ops[i] = ops[256];
-  }
-}
 
 
-function z80_ddfdcbxx(opcode, tempaddr) {
-  z80_ddfdcb_ops[opcode](tempaddr);
-}
+
+
+
+
 
 
 
@@ -6703,1444 +6749,1647 @@ const z80_fdxx = (key) => {
     }
   }
 };
+const z80_ddfdcbxx = (key, tempaddr) => {
+  switch (key) {
+    case 0x00: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        z80.b = ((z80.b & 0x7f) << 1) | (z80.b >> 7);
+        z80.f = (z80.b & 0x01) | sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x01: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        z80.c = ((z80.c & 0x7f) << 1) | (z80.c >> 7);
+        z80.f = (z80.c & 0x01) | sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x02: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        z80.d = ((z80.d & 0x7f) << 1) | (z80.d >> 7);
+        z80.f = (z80.d & 0x01) | sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x03: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        z80.e = ((z80.e & 0x7f) << 1) | (z80.e >> 7);
+        z80.f = (z80.e & 0x01) | sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x04: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        z80.h = ((z80.h & 0x7f) << 1) | (z80.h >> 7);
+        z80.f = (z80.h & 0x01) | sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x05: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        z80.l = ((z80.l & 0x7f) << 1) | (z80.l >> 7);
+        z80.f = (z80.l & 0x01) | sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x06: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          bytetemp = ((bytetemp & 0x7f) << 1) | (bytetemp >> 7);
+          z80.f = (bytetemp & 0x01) | sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x07: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        z80.a = ((z80.a & 0x7f) << 1) | (z80.a >> 7);
+        z80.f = (z80.a & 0x01) | sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x08: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.b & 0x01;
+        z80.b = (z80.b >> 1) | ((z80.b & 0x01) << 7);
+        z80.f |= sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x09: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.c & 0x01;
+        z80.c = (z80.c >> 1) | ((z80.c & 0x01) << 7);
+        z80.f |= sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x0a: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.d & 0x01;
+        z80.d = (z80.d >> 1) | ((z80.d & 0x01) << 7);
+        z80.f |= sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x0b: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.e & 0x01;
+        z80.e = (z80.e >> 1) | ((z80.e & 0x01) << 7);
+        z80.f |= sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x0c: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.h & 0x01;
+        z80.h = (z80.h >> 1) | ((z80.h & 0x01) << 7);
+        z80.f |= sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x0d: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.l & 0x01;
+        z80.l = (z80.l >> 1) | ((z80.l & 0x01) << 7);
+        z80.f |= sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x0e: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = bytetemp & 0x01;
+          bytetemp = (bytetemp >> 1) | ((bytetemp & 0x01) << 7);
+          z80.f |= sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x0f: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.a & 0x01;
+        z80.a = (z80.a >> 1) | ((z80.a & 0x01) << 7);
+        z80.f |= sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x10: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.b;
+        z80.b = ((z80.b & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x11: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.c;
+        z80.c = ((z80.c & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x12: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.d;
+        z80.d = ((z80.d & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x13: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.e;
+        z80.e = ((z80.e & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x14: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.h;
+        z80.h = ((z80.h & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x15: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.l;
+        z80.l = ((z80.l & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x16: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          var rltemp = bytetemp;
+          bytetemp = ((bytetemp & 0x7f) << 1) | (z80.f & 0x01);
+          z80.f = (rltemp >> 7) | sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x17: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        var rltemp = z80.a;
+        z80.a = ((z80.a & 0x7f) << 1) | (z80.f & 0x01);
+        z80.f = (rltemp >> 7) | sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x18: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.b;
+        z80.b = (z80.b >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x19: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.c;
+        z80.c = (z80.c >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x1a: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.d;
+        z80.d = (z80.d >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x1b: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.e;
+        z80.e = (z80.e >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x1c: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.h;
+        z80.h = (z80.h >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x1d: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.l;
+        z80.l = (z80.l >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x1e: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          var rrtemp = bytetemp;
+          bytetemp = (bytetemp >> 1) | ((z80.f & 0x01) << 7);
+          z80.f = (rrtemp & 0x01) | sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x1f: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        var rrtemp = z80.a;
+        z80.a = (z80.a >> 1) | ((z80.f & 0x01) << 7);
+        z80.f = (rrtemp & 0x01) | sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x20: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.b >> 7;
+        z80.b <<= 1;
+        z80.b &= 0xff;
+        z80.f |= sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x21: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.c >> 7;
+        z80.c <<= 1;
+        z80.c &= 0xff;
+        z80.f |= sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x22: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.d >> 7;
+        z80.d <<= 1;
+        z80.d &= 0xff;
+        z80.f |= sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x23: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.e >> 7;
+        z80.e <<= 1;
+        z80.e &= 0xff;
+        z80.f |= sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x24: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.h >> 7;
+        z80.h <<= 1;
+        z80.h &= 0xff;
+        z80.f |= sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x25: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.l >> 7;
+        z80.l <<= 1;
+        z80.l &= 0xff;
+        z80.f |= sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x26: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = bytetemp >> 7;
+          bytetemp <<= 1;
+          bytetemp &= 0xff;
+          z80.f |= sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x27: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.a >> 7;
+        z80.a <<= 1;
+        z80.a &= 0xff;
+        z80.f |= sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x28: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.b & 0x01;
+        z80.b = (z80.b & 0x80) | (z80.b >> 1);
+        z80.f |= sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x29: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.c & 0x01;
+        z80.c = (z80.c & 0x80) | (z80.c >> 1);
+        z80.f |= sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x2a: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.d & 0x01;
+        z80.d = (z80.d & 0x80) | (z80.d >> 1);
+        z80.f |= sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x2b: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.e & 0x01;
+        z80.e = (z80.e & 0x80) | (z80.e >> 1);
+        z80.f |= sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x2c: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.h & 0x01;
+        z80.h = (z80.h & 0x80) | (z80.h >> 1);
+        z80.f |= sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x2d: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.l & 0x01;
+        z80.l = (z80.l & 0x80) | (z80.l >> 1);
+        z80.f |= sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x2e: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = bytetemp & 0x01;
+          bytetemp = (bytetemp & 0x80) | (bytetemp >> 1);
+          z80.f |= sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x2f: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.a & 0x01;
+        z80.a = (z80.a & 0x80) | (z80.a >> 1);
+        z80.f |= sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x30: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.b >> 7;
+        z80.b = (z80.b << 1) | 0x01;
+        z80.b &= 0xff;
+        z80.f |= sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x31: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.c >> 7;
+        z80.c = (z80.c << 1) | 0x01;
+        z80.c &= 0xff;
+        z80.f |= sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x32: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.d >> 7;
+        z80.d = (z80.d << 1) | 0x01;
+        z80.d &= 0xff;
+        z80.f |= sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x33: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.e >> 7;
+        z80.e = (z80.e << 1) | 0x01;
+        z80.e &= 0xff;
+        z80.f |= sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x34: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.h >> 7;
+        z80.h = (z80.h << 1) | 0x01;
+        z80.h &= 0xff;
+        z80.f |= sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x35: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.l >> 7;
+        z80.l = (z80.l << 1) | 0x01;
+        z80.l &= 0xff;
+        z80.f |= sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x36: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = bytetemp >> 7;
+          bytetemp = (bytetemp << 1) | 0x01;
+          bytetemp &= 0xff;
+          z80.f |= sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x37: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.a >> 7;
+        z80.a = (z80.a << 1) | 0x01;
+        z80.a &= 0xff;
+        z80.f |= sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x38: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.b & 0x01;
+        z80.b >>= 1;
+        z80.f |= sz53p_table[z80.b];
+      }
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x39: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.c & 0x01;
+        z80.c >>= 1;
+        z80.f |= sz53p_table[z80.c];
+      }
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x3a: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.d & 0x01;
+        z80.d >>= 1;
+        z80.f |= sz53p_table[z80.d];
+      }
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x3b: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.e & 0x01;
+        z80.e >>= 1;
+        z80.f |= sz53p_table[z80.e];
+      }
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x3c: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.h & 0x01;
+        z80.h >>= 1;
+        z80.f |= sz53p_table[z80.h];
+      }
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x3d: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.l & 0x01;
+        z80.l >>= 1;
+        z80.f |= sz53p_table[z80.l];
+      }
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x3e: {
+      that.tstates += 8;
+      {
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = bytetemp & 0x01;
+          bytetemp >>= 1;
+          z80.f |= sz53p_table[bytetemp];
+        }
+        that.mem.writebyte(tempaddr, bytetemp);
+      }
+      break;
+    }
+    case 0x3f: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr);
+      {
+        z80.f = z80.a & 0x01;
+        z80.a >>= 1;
+        z80.f |= sz53p_table[z80.a];
+      }
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
 
+    case 0x80: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x81: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x82: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x83: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x84: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x85: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x86: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xfe);
+      break;
+    }
+    case 0x87: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xfe;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x88: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x89: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x8a: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x8b: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x8c: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x8d: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x8e: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xfd);
+      break;
+    }
+    case 0x8f: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xfd;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x90: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x91: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x92: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x93: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x94: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x95: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x96: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xfb);
+      break;
+    }
+    case 0x97: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xfb;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0x98: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0x99: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0x9a: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0x9b: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0x9c: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0x9d: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0x9e: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xf7);
+      break;
+    }
+    case 0x9f: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xf7;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xa0: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xa1: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xa2: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xa3: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xa4: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xa5: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xa6: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xef);
+      break;
+    }
+    case 0xa7: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xef;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xa8: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xa9: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xaa: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xab: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xac: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xad: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xae: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xdf);
+      break;
+    }
+    case 0xaf: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xdf;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xb0: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xb1: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xb2: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xb3: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xb4: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xb5: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xb6: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xbf);
+      break;
+    }
+    case 0xb7: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0xbf;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xb8: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xb9: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xba: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xbb: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xbc: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xbd: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xbe: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0x7f);
+      break;
+    }
+    case 0xbf: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) & 0x7f;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xc0: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xc1: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xc2: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xc3: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xc4: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xc5: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xc6: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x01);
+      break;
+    }
+    case 0xc7: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x01;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xc8: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xc9: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xca: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xcb: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xcc: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xcd: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xce: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x02);
+      break;
+    }
+    case 0xcf: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x02;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xd0: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xd1: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xd2: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xd3: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xd4: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xd5: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xd6: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x04);
+      break;
+    }
+    case 0xd7: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x04;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xd8: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xd9: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xda: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xdb: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xdc: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xdd: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xde: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x08);
+      break;
+    }
+    case 0xdf: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x08;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xe0: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xe1: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xe2: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xe3: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xe4: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xe5: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xe6: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x10);
+      break;
+    }
+    case 0xe7: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x10;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xe8: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xe9: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xea: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xeb: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xec: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xed: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xee: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x20);
+      break;
+    }
+    case 0xef: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x20;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xf0: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xf1: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xf2: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xf3: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xf4: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xf5: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xf6: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x40);
+      break;
+    }
+    case 0xf7: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x40;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
+    case 0xf8: {
+      that.tstates += 8;
+      z80.b = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.b);
+      break;
+    }
+    case 0xf9: {
+      that.tstates += 8;
+      z80.c = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.c);
+      break;
+    }
+    case 0xfa: {
+      that.tstates += 8;
+      z80.d = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.d);
+      break;
+    }
+    case 0xfb: {
+      that.tstates += 8;
+      z80.e = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.e);
+      break;
+    }
+    case 0xfc: {
+      that.tstates += 8;
+      z80.h = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.h);
+      break;
+    }
+    case 0xfd: {
+      that.tstates += 8;
+      z80.l = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.l);
+      break;
+    }
+    case 0xfe: {
+      that.tstates += 8;
+      that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x80);
+      break;
+    }
+    case 0xff: {
+      that.tstates += 8;
+      z80.a = that.mem.readbyte(tempaddr) | 0x80;
+      that.mem.writebyte(tempaddr, z80.a);
+      break;
+    }
 
-
-
-var z80_ddfdcb_ops = (function z80_setup_ddfdcb_ops() {
-  var ops = [];
-  ops[0x00] = function op_0x00(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      z80.b = ((z80.b & 0x7f) << 1) | (z80.b >> 7);
-      z80.f = (z80.b & 0x01) | sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x01] = function op_0x01(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      z80.c = ((z80.c & 0x7f) << 1) | (z80.c >> 7);
-      z80.f = (z80.c & 0x01) | sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x02] = function op_0x02(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      z80.d = ((z80.d & 0x7f) << 1) | (z80.d >> 7);
-      z80.f = (z80.d & 0x01) | sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x03] = function op_0x03(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      z80.e = ((z80.e & 0x7f) << 1) | (z80.e >> 7);
-      z80.f = (z80.e & 0x01) | sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x04] = function op_0x04(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      z80.h = ((z80.h & 0x7f) << 1) | (z80.h >> 7);
-      z80.f = (z80.h & 0x01) | sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x05] = function op_0x05(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      z80.l = ((z80.l & 0x7f) << 1) | (z80.l >> 7);
-      z80.f = (z80.l & 0x01) | sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x06] = function op_0x06(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    case 0x43:
+    case 0x44:
+    case 0x45:
+    case 0x46:
+    case 0x47: {
+      that.tstates += 5;
       {
-        bytetemp = ((bytetemp & 0x7f) << 1) | (bytetemp >> 7);
-        z80.f = (bytetemp & 0x01) | sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 0))) z80.f |= 0x04 | 0x40;
+          if (0 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x07] = function op_0x07(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      z80.a = ((z80.a & 0x7f) << 1) | (z80.a >> 7);
-      z80.f = (z80.a & 0x01) | sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x08] = function op_0x08(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.b & 0x01;
-      z80.b = (z80.b >> 1) | ((z80.b & 0x01) << 7);
-      z80.f |= sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x09] = function op_0x09(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.c & 0x01;
-      z80.c = (z80.c >> 1) | ((z80.c & 0x01) << 7);
-      z80.f |= sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x0a] = function op_0x0a(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.d & 0x01;
-      z80.d = (z80.d >> 1) | ((z80.d & 0x01) << 7);
-      z80.f |= sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x0b] = function op_0x0b(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.e & 0x01;
-      z80.e = (z80.e >> 1) | ((z80.e & 0x01) << 7);
-      z80.f |= sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x0c] = function op_0x0c(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.h & 0x01;
-      z80.h = (z80.h >> 1) | ((z80.h & 0x01) << 7);
-      z80.f |= sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x0d] = function op_0x0d(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.l & 0x01;
-      z80.l = (z80.l >> 1) | ((z80.l & 0x01) << 7);
-      z80.f |= sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x0e] = function op_0x0e(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x48:
+    case 0x49:
+    case 0x4a:
+    case 0x4b:
+    case 0x4c:
+    case 0x4d:
+    case 0x4e:
+    case 0x4f: {
+      that.tstates += 5;
       {
-        z80.f = bytetemp & 0x01;
-        bytetemp = (bytetemp >> 1) | ((bytetemp & 0x01) << 7);
-        z80.f |= sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 1))) z80.f |= 0x04 | 0x40;
+          if (1 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x0f] = function op_0x0f(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.a & 0x01;
-      z80.a = (z80.a >> 1) | ((z80.a & 0x01) << 7);
-      z80.f |= sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x10] = function op_0x10(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.b;
-      z80.b = ((z80.b & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x11] = function op_0x11(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.c;
-      z80.c = ((z80.c & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x12] = function op_0x12(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.d;
-      z80.d = ((z80.d & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x13] = function op_0x13(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.e;
-      z80.e = ((z80.e & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x14] = function op_0x14(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.h;
-      z80.h = ((z80.h & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x15] = function op_0x15(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.l;
-      z80.l = ((z80.l & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x16] = function op_0x16(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x50:
+    case 0x51:
+    case 0x52:
+    case 0x53:
+    case 0x54:
+    case 0x55:
+    case 0x56:
+    case 0x57: {
+      that.tstates += 5;
       {
-        var rltemp = bytetemp;
-        bytetemp = ((bytetemp & 0x7f) << 1) | (z80.f & 0x01);
-        z80.f = (rltemp >> 7) | sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 2))) z80.f |= 0x04 | 0x40;
+          if (2 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x17] = function op_0x17(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      var rltemp = z80.a;
-      z80.a = ((z80.a & 0x7f) << 1) | (z80.f & 0x01);
-      z80.f = (rltemp >> 7) | sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x18] = function op_0x18(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.b;
-      z80.b = (z80.b >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x19] = function op_0x19(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.c;
-      z80.c = (z80.c >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x1a] = function op_0x1a(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.d;
-      z80.d = (z80.d >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x1b] = function op_0x1b(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.e;
-      z80.e = (z80.e >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x1c] = function op_0x1c(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.h;
-      z80.h = (z80.h >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x1d] = function op_0x1d(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.l;
-      z80.l = (z80.l >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x1e] = function op_0x1e(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x58:
+    case 0x59:
+    case 0x5a:
+    case 0x5b:
+    case 0x5c:
+    case 0x5d:
+    case 0x5e:
+    case 0x5f: {
+      that.tstates += 5;
       {
-        var rrtemp = bytetemp;
-        bytetemp = (bytetemp >> 1) | ((z80.f & 0x01) << 7);
-        z80.f = (rrtemp & 0x01) | sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 3))) z80.f |= 0x04 | 0x40;
+          if (3 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x1f] = function op_0x1f(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      var rrtemp = z80.a;
-      z80.a = (z80.a >> 1) | ((z80.f & 0x01) << 7);
-      z80.f = (rrtemp & 0x01) | sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x20] = function op_0x20(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.b >> 7;
-      z80.b <<= 1;
-      z80.b &= 0xff;
-      z80.f |= sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x21] = function op_0x21(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.c >> 7;
-      z80.c <<= 1;
-      z80.c &= 0xff;
-      z80.f |= sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x22] = function op_0x22(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.d >> 7;
-      z80.d <<= 1;
-      z80.d &= 0xff;
-      z80.f |= sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x23] = function op_0x23(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.e >> 7;
-      z80.e <<= 1;
-      z80.e &= 0xff;
-      z80.f |= sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x24] = function op_0x24(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.h >> 7;
-      z80.h <<= 1;
-      z80.h &= 0xff;
-      z80.f |= sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x25] = function op_0x25(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.l >> 7;
-      z80.l <<= 1;
-      z80.l &= 0xff;
-      z80.f |= sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x26] = function op_0x26(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x60:
+    case 0x61:
+    case 0x62:
+    case 0x63:
+    case 0x64:
+    case 0x65:
+    case 0x66:
+    case 0x67: {
+      that.tstates += 5;
       {
-        z80.f = bytetemp >> 7;
-        bytetemp <<= 1;
-        bytetemp &= 0xff;
-        z80.f |= sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 4))) z80.f |= 0x04 | 0x40;
+          if (4 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x27] = function op_0x27(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.a >> 7;
-      z80.a <<= 1;
-      z80.a &= 0xff;
-      z80.f |= sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x28] = function op_0x28(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.b & 0x01;
-      z80.b = (z80.b & 0x80) | (z80.b >> 1);
-      z80.f |= sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x29] = function op_0x29(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.c & 0x01;
-      z80.c = (z80.c & 0x80) | (z80.c >> 1);
-      z80.f |= sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x2a] = function op_0x2a(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.d & 0x01;
-      z80.d = (z80.d & 0x80) | (z80.d >> 1);
-      z80.f |= sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x2b] = function op_0x2b(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.e & 0x01;
-      z80.e = (z80.e & 0x80) | (z80.e >> 1);
-      z80.f |= sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x2c] = function op_0x2c(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.h & 0x01;
-      z80.h = (z80.h & 0x80) | (z80.h >> 1);
-      z80.f |= sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x2d] = function op_0x2d(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.l & 0x01;
-      z80.l = (z80.l & 0x80) | (z80.l >> 1);
-      z80.f |= sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x2e] = function op_0x2e(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x68:
+    case 0x69:
+    case 0x6a:
+    case 0x6b:
+    case 0x6c:
+    case 0x6d:
+    case 0x6e:
+    case 0x6f: {
+      that.tstates += 5;
       {
-        z80.f = bytetemp & 0x01;
-        bytetemp = (bytetemp & 0x80) | (bytetemp >> 1);
-        z80.f |= sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 5))) z80.f |= 0x04 | 0x40;
+          if (5 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x2f] = function op_0x2f(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.a & 0x01;
-      z80.a = (z80.a & 0x80) | (z80.a >> 1);
-      z80.f |= sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x30] = function op_0x30(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.b >> 7;
-      z80.b = (z80.b << 1) | 0x01;
-      z80.b &= 0xff;
-      z80.f |= sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x31] = function op_0x31(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.c >> 7;
-      z80.c = (z80.c << 1) | 0x01;
-      z80.c &= 0xff;
-      z80.f |= sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x32] = function op_0x32(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.d >> 7;
-      z80.d = (z80.d << 1) | 0x01;
-      z80.d &= 0xff;
-      z80.f |= sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x33] = function op_0x33(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.e >> 7;
-      z80.e = (z80.e << 1) | 0x01;
-      z80.e &= 0xff;
-      z80.f |= sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x34] = function op_0x34(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.h >> 7;
-      z80.h = (z80.h << 1) | 0x01;
-      z80.h &= 0xff;
-      z80.f |= sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x35] = function op_0x35(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.l >> 7;
-      z80.l = (z80.l << 1) | 0x01;
-      z80.l &= 0xff;
-      z80.f |= sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x36] = function op_0x36(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x70:
+    case 0x71:
+    case 0x72:
+    case 0x73:
+    case 0x74:
+    case 0x75:
+    case 0x76:
+    case 0x77: {
+      that.tstates += 5;
       {
-        z80.f = bytetemp >> 7;
-        bytetemp = (bytetemp << 1) | 0x01;
-        bytetemp &= 0xff;
-        z80.f |= sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 6))) z80.f |= 0x04 | 0x40;
+          if (6 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x37] = function op_0x37(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.a >> 7;
-      z80.a = (z80.a << 1) | 0x01;
-      z80.a &= 0xff;
-      z80.f |= sz53p_table[z80.a];
-    }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x38] = function op_0x38(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.b & 0x01;
-      z80.b >>= 1;
-      z80.f |= sz53p_table[z80.b];
-    }
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x39] = function op_0x39(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.c & 0x01;
-      z80.c >>= 1;
-      z80.f |= sz53p_table[z80.c];
-    }
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x3a] = function op_0x3a(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.d & 0x01;
-      z80.d >>= 1;
-      z80.f |= sz53p_table[z80.d];
-    }
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x3b] = function op_0x3b(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.e & 0x01;
-      z80.e >>= 1;
-      z80.f |= sz53p_table[z80.e];
-    }
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x3c] = function op_0x3c(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.h & 0x01;
-      z80.h >>= 1;
-      z80.f |= sz53p_table[z80.h];
-    }
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x3d] = function op_0x3d(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.l & 0x01;
-      z80.l >>= 1;
-      z80.f |= sz53p_table[z80.l];
-    }
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x3e] = function op_0x3e(tempaddr) {
-    that.tstates += 8;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
+    case 0x78:
+    case 0x79:
+    case 0x7a:
+    case 0x7b:
+    case 0x7c:
+    case 0x7d:
+    case 0x7e:
+    case 0x7f: {
+      that.tstates += 5;
       {
-        z80.f = bytetemp & 0x01;
-        bytetemp >>= 1;
-        z80.f |= sz53p_table[bytetemp];
+        var bytetemp = that.mem.readbyte(tempaddr);
+        {
+          z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
+          if (!(bytetemp & (0x01 << 7))) z80.f |= 0x04 | 0x40;
+          if (7 == 7 && bytetemp & 0x80) z80.f |= 0x80;
+        }
       }
-      that.mem.writebyte(tempaddr, bytetemp);
+      break;
     }
-  };
-  ops[0x3f] = function op_0x3f(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr);
-    {
-      z80.f = z80.a & 0x01;
-      z80.a >>= 1;
-      z80.f |= sz53p_table[z80.a];
+    case 256: {
+      break;
     }
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x40] = ops[0x41] = ops[0x42] = ops[0x43] = ops[0x44] = ops[0x45] = ops[0x46] = ops[0x47] = function op_0x47(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 0))) z80.f |= 0x04 | 0x40;
-        if (0 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x48] = ops[0x49] = ops[0x4a] = ops[0x4b] = ops[0x4c] = ops[0x4d] = ops[0x4e] = ops[0x4f] = function op_0x4f(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 1))) z80.f |= 0x04 | 0x40;
-        if (1 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x50] = ops[0x51] = ops[0x52] = ops[0x53] = ops[0x54] = ops[0x55] = ops[0x56] = ops[0x57] = function op_0x57(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 2))) z80.f |= 0x04 | 0x40;
-        if (2 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x58] = ops[0x59] = ops[0x5a] = ops[0x5b] = ops[0x5c] = ops[0x5d] = ops[0x5e] = ops[0x5f] = function op_0x5f(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 3))) z80.f |= 0x04 | 0x40;
-        if (3 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x60] = ops[0x61] = ops[0x62] = ops[0x63] = ops[0x64] = ops[0x65] = ops[0x66] = ops[0x67] = function op_0x67(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 4))) z80.f |= 0x04 | 0x40;
-        if (4 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x68] = ops[0x69] = ops[0x6a] = ops[0x6b] = ops[0x6c] = ops[0x6d] = ops[0x6e] = ops[0x6f] = function op_0x6f(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 5))) z80.f |= 0x04 | 0x40;
-        if (5 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x70] = ops[0x71] = ops[0x72] = ops[0x73] = ops[0x74] = ops[0x75] = ops[0x76] = ops[0x77] = function op_0x77(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 6))) z80.f |= 0x04 | 0x40;
-        if (6 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x78] = ops[0x79] = ops[0x7a] = ops[0x7b] = ops[0x7c] = ops[0x7d] = ops[0x7e] = ops[0x7f] = function op_0x7f(
-    tempaddr
-  ) {
-    that.tstates += 5;
-    {
-      var bytetemp = that.mem.readbyte(tempaddr);
-      {
-        z80.f = (z80.f & 0x01) | 0x10 | ((tempaddr >> 8) & (0x08 | 0x20));
-        if (!(bytetemp & (0x01 << 7))) z80.f |= 0x04 | 0x40;
-        if (7 == 7 && bytetemp & 0x80) z80.f |= 0x80;
-      }
-    }
-  };
-  ops[0x80] = function op_0x80(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x81] = function op_0x81(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x82] = function op_0x82(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x83] = function op_0x83(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x84] = function op_0x84(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x85] = function op_0x85(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x86] = function op_0x86(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xfe);
-  };
-  ops[0x87] = function op_0x87(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xfe;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x88] = function op_0x88(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x89] = function op_0x89(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x8a] = function op_0x8a(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x8b] = function op_0x8b(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x8c] = function op_0x8c(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x8d] = function op_0x8d(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x8e] = function op_0x8e(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xfd);
-  };
-  ops[0x8f] = function op_0x8f(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xfd;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x90] = function op_0x90(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x91] = function op_0x91(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x92] = function op_0x92(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x93] = function op_0x93(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x94] = function op_0x94(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x95] = function op_0x95(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x96] = function op_0x96(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xfb);
-  };
-  ops[0x97] = function op_0x97(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xfb;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0x98] = function op_0x98(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0x99] = function op_0x99(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0x9a] = function op_0x9a(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0x9b] = function op_0x9b(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0x9c] = function op_0x9c(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0x9d] = function op_0x9d(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0x9e] = function op_0x9e(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xf7);
-  };
-  ops[0x9f] = function op_0x9f(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xf7;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xa0] = function op_0xa0(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xa1] = function op_0xa1(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xa2] = function op_0xa2(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xa3] = function op_0xa3(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xa4] = function op_0xa4(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xa5] = function op_0xa5(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xa6] = function op_0xa6(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xef);
-  };
-  ops[0xa7] = function op_0xa7(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xef;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xa8] = function op_0xa8(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xa9] = function op_0xa9(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xaa] = function op_0xaa(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xab] = function op_0xab(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xac] = function op_0xac(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xad] = function op_0xad(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xae] = function op_0xae(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xdf);
-  };
-  ops[0xaf] = function op_0xaf(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xdf;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xb0] = function op_0xb0(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xb1] = function op_0xb1(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xb2] = function op_0xb2(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xb3] = function op_0xb3(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xb4] = function op_0xb4(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xb5] = function op_0xb5(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xb6] = function op_0xb6(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0xbf);
-  };
-  ops[0xb7] = function op_0xb7(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0xbf;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xb8] = function op_0xb8(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xb9] = function op_0xb9(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xba] = function op_0xba(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xbb] = function op_0xbb(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xbc] = function op_0xbc(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xbd] = function op_0xbd(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xbe] = function op_0xbe(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) & 0x7f);
-  };
-  ops[0xbf] = function op_0xbf(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) & 0x7f;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xc0] = function op_0xc0(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xc1] = function op_0xc1(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xc2] = function op_0xc2(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xc3] = function op_0xc3(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xc4] = function op_0xc4(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xc5] = function op_0xc5(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xc6] = function op_0xc6(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x01);
-  };
-  ops[0xc7] = function op_0xc7(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x01;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xc8] = function op_0xc8(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xc9] = function op_0xc9(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xca] = function op_0xca(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xcb] = function op_0xcb(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xcc] = function op_0xcc(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xcd] = function op_0xcd(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xce] = function op_0xce(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x02);
-  };
-  ops[0xcf] = function op_0xcf(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x02;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xd0] = function op_0xd0(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xd1] = function op_0xd1(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xd2] = function op_0xd2(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xd3] = function op_0xd3(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xd4] = function op_0xd4(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xd5] = function op_0xd5(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xd6] = function op_0xd6(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x04);
-  };
-  ops[0xd7] = function op_0xd7(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x04;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xd8] = function op_0xd8(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xd9] = function op_0xd9(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xda] = function op_0xda(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xdb] = function op_0xdb(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xdc] = function op_0xdc(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xdd] = function op_0xdd(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xde] = function op_0xde(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x08);
-  };
-  ops[0xdf] = function op_0xdf(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x08;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xe0] = function op_0xe0(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xe1] = function op_0xe1(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xe2] = function op_0xe2(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xe3] = function op_0xe3(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xe4] = function op_0xe4(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xe5] = function op_0xe5(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xe6] = function op_0xe6(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x10);
-  };
-  ops[0xe7] = function op_0xe7(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x10;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xe8] = function op_0xe8(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xe9] = function op_0xe9(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xea] = function op_0xea(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xeb] = function op_0xeb(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xec] = function op_0xec(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xed] = function op_0xed(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xee] = function op_0xee(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x20);
-  };
-  ops[0xef] = function op_0xef(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x20;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xf0] = function op_0xf0(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xf1] = function op_0xf1(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xf2] = function op_0xf2(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xf3] = function op_0xf3(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xf4] = function op_0xf4(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xf5] = function op_0xf5(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xf6] = function op_0xf6(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x40);
-  };
-  ops[0xf7] = function op_0xf7(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x40;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[0xf8] = function op_0xf8(tempaddr) {
-    that.tstates += 8;
-    z80.b = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.b);
-  };
-  ops[0xf9] = function op_0xf9(tempaddr) {
-    that.tstates += 8;
-    z80.c = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.c);
-  };
-  ops[0xfa] = function op_0xfa(tempaddr) {
-    that.tstates += 8;
-    z80.d = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.d);
-  };
-  ops[0xfb] = function op_0xfb(tempaddr) {
-    that.tstates += 8;
-    z80.e = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.e);
-  };
-  ops[0xfc] = function op_0xfc(tempaddr) {
-    that.tstates += 8;
-    z80.h = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.h);
-  };
-  ops[0xfd] = function op_0xfd(tempaddr) {
-    that.tstates += 8;
-    z80.l = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.l);
-  };
-  ops[0xfe] = function op_0xfe(tempaddr) {
-    that.tstates += 8;
-    that.mem.writebyte(tempaddr, that.mem.readbyte(tempaddr) | 0x80);
-  };
-  ops[0xff] = function op_0xff(tempaddr) {
-    that.tstates += 8;
-    z80.a = that.mem.readbyte(tempaddr) | 0x80;
-    that.mem.writebyte(tempaddr, z80.a);
-  };
-  ops[256] = function () {};
-  z80_defaults(ops);
-  return ops;
-})();
-
-function z80_do_opcodes(cycleCallback,onstep) {
-  while (that.tstates < that.event_next_event || onstep) {
-    if (z80.irq_pending && z80.iff1) {
-      if (z80.irq_suppress) {
-        z80.irq_suppress = false;
-      } else {
-        z80.irq_suppress = true;
-        z80_interrupt();
-      }
-    }
-    var oldTstates = that.tstates;
-    that.tstates += 4;
-
-    z80.r = (z80.r + 1) & 0x7f;
-    var opcode = that.mem.readbyte(z80.pc);
-    if(onstep)this.showInfo(z80.pc,opcode)
-    z80_instruction_hook(z80.pc, opcode);
-    z80.pc = (z80.pc + 1) & 0xffff;
-    
-    z80_base_ops(opcode);
-    cycleCallback(that.tstates + oldTstates);
-
-    if(onstep)break;
   }
-}
-function showInfo(pc,opcode){
-  let rval = this.Instructions(opcode)
-  console.log("");
-  console.log("PC      : " + this.toHex(pc));
-  console.log("OPCODE  : "+rval.opCode);
-  console.log("OPHEX   : "+this.toHex(opcode));
-}
-function toHex (v) {
-  return '0x' + (('0000' + v.toString(16).toUpperCase()).substr(-4));
-}
+};
 function Instructions (opecode){
   const output = {
     opecode:opecode.toString(16)
