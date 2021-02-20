@@ -1,5 +1,6 @@
 class ROM{
-  constructor(){
+  constructor(core){
+    this.core = core;
     this.romBanks = [];
     this.pages =  new Uint8Array(3);
     this.romPageMask = 0;

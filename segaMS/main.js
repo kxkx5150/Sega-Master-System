@@ -14,12 +14,19 @@ class SEGAMS {
     this.targetTimeout = 1000 / this.fps;
     this.lastFrame = null;
 
+    this.info = {
+      cpu:true,
+      mem:false,
+    }
+
     this.io = new IO(this);
     this.mem = new RAM(this);
-    this.rom = new ROM();
+    this.rom = new ROM(this);
     this.soundChip = null;
-  }
+    this.cpu = new Z80(this,this.mem);
 
+
+  }
   miracle_init() {
     z80_init();
     vdp_init();
@@ -31,7 +38,22 @@ class SEGAMS {
     this.rom.load(bin);
     this.audio_enable(true);
     this.run();
+    // this.runCPUTest();
   }
+
+
+
+
+  runCPUTest(){
+    for (let i = 0; i < 100; i++) {
+      this.cpu.run_instruction();
+      var cb = function(){}
+      z80_do_opcodes(cb,true);
+    }
+  }
+
+
+
   run() {
     var now = Date.now();
     var atimeout = this.targetTimeout;
@@ -61,7 +83,7 @@ class SEGAMS {
     this.event_next_event = this.tstatesPerHblank;
     this.tstates -= this.tstatesPerHblank;
 
-    let cb = this.cycleCallback.bind(this)
+    let cb = this.soundChip.polltime.bind(this)
     z80_do_opcodes(cb);
 
     var vdp_status = vdp_hblank();
@@ -77,6 +99,7 @@ class SEGAMS {
   }
   miracle_reset() {
     z80_reset();
+    this.cpu.reset();
     vdp_reset();
     this.audio_reset();
     this.io.reset();
@@ -89,9 +112,6 @@ class SEGAMS {
     sp.connect(this.actx.destination, 0, 0);
     const chip = new SoundChip(this.actx.sampleRate, this.cpuHz);
     this.soundChip = chip;
-  }
-  cycleCallback(tstates) {
-    this.soundChip.polltime(tstates);
   }
   pumpAudio(e) {
     var chan = e.outputBuffer.getChannelData(0);

@@ -7265,8 +7265,8 @@ var z80_ddfdcb_ops = (function z80_setup_ddfdcb_ops() {
 function z80_ddfdcbxx(opcode, tempaddr) {
   z80_ddfdcb_ops[opcode](tempaddr);
 }
-function z80_do_opcodes(cycleCallback) {
-  while (that.tstates < that.event_next_event) {
+function z80_do_opcodes(cycleCallback,onstep) {
+  while (that.tstates < that.event_next_event || onstep) {
     if (z80.irq_pending && z80.iff1) {
       if (z80.irq_suppress) {
         z80.irq_suppress = false;
@@ -7277,11 +7277,1059 @@ function z80_do_opcodes(cycleCallback) {
     }
     var oldTstates = that.tstates;
     that.tstates += 4;
+
     z80.r = (z80.r + 1) & 0x7f;
     var opcode = that.mem.readbyte(z80.pc);
+    if(onstep)this.showInfo(z80.pc,opcode)
     z80_instruction_hook(z80.pc, opcode);
     z80.pc = (z80.pc + 1) & 0xffff;
+    
     z80_base_ops[opcode]();
     cycleCallback(that.tstates + oldTstates);
+
+    if(onstep)break;
   }
 }
+function showInfo(pc,opcode){
+  let rval = this.Instructions(opcode)
+  console.log("");
+  console.log("PC      : " + this.toHex(pc));
+  console.log("OPCODE  : "+rval.opCode);
+  console.log("OPHEX   : "+this.toHex(opcode));
+}
+
+
+function toHex (v) {
+  return '0x' + (('0000' + v.toString(16).toUpperCase()).substr(-4));
+}
+function Instructions (opecode){
+  const output = {
+    opecode:opecode.toString(16)
+  };
+  switch (opecode) {
+    case 0x00:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x01:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x02:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x03:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x04:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x05:
+      output.opCode = "DCRR";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x06:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x07:
+      output.opCode = "RLCA";
+      output.z80OPCode = "RCLA";
+      return output;
+    case 0x08:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x09:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x0a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x0b:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x0c:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x0d:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x0e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x0f:
+      output.opCode = "RRCA";
+      output.z80OPCode = "RRCA";
+      return output;
+    case 0x10:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x11:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x12:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x13:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x14:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x15:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x16:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x17:
+      output.opCode = "RLC9";
+      output.z80OPCode = "RLA";
+      return output;
+    case 0x18:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x19:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x1a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x1b:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x1c:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x1d:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x1e:
+      output.opCode = "UNKOP";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x1f:
+      output.opCode = "RRC";
+      output.z80OPCode = "RRA";
+      return output;
+    case 0x20:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x21:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x22:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x23:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x24:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x25:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x26:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x27:
+      output.opCode = "NOP";
+      output.z80OPCode = "DAA";
+      return output;
+    case 0x28:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x29:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x2a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x2b:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x2c:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x2d:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x2e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x2f:
+      output.opCode = "CPL";
+      output.z80OPCode = "CPL";
+      return output;
+    case 0x30:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x31:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x32:
+      output.opCode = "LD2M";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x33:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x34:
+      output.opCode = "INCM";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x35:
+      output.opCode = "DCRM";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x36:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x37:
+      output.opCode = "SCF";
+      output.z80OPCode = "SCF";
+      return output;
+    case 0x38:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0x39:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x3a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x3b:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x3c:
+      output.opCode = "INCR";
+      output.z80OPCode = "INC";
+      return output;
+    case 0x3d:
+      output.opCode = "DCRR";
+      output.z80OPCode = "DEC";
+      return output;
+    case 0x3e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x3f:
+      output.opCode = "CCF";
+      output.z80OPCode = "CCF";
+      return output;
+    case 0x40:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x41:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x42:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x43:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x44:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x45:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x46:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x47:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x48:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x49:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x4a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x4b:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x4c:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x4d:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x4e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x4f:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x50:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x51:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x52:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x53:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x54:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x55:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x56:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x57:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x58:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x59:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x5a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x5b:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x5c:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x5d:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x5e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x5f:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x60:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x61:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x62:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x63:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x64:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x65:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x66:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x67:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x68:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x69:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x6a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x6b:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x6c:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x6d:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x6e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x6f:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x70:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x71:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x72:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x73:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x74:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x75:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x76:
+      output.opCode = "HLT";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x77:
+      output.opCode = "LD2M";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x78:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x79:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x7a:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x7b:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x7c:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x7d:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x7e:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x7f:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0x80:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x81:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x82:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x83:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x84:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x85:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x86:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x87:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x88:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x89:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x8a:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x8b:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x8c:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x8d:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x8e:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x8f:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0x90:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x91:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x92:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x93:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x94:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x95:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x96:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x97:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0x98:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x99:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x9a:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x9b:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x9c:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x9d:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x9e:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0x9f:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0xa0:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa1:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa2:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa3:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa4:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa5:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa6:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa7:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xa8:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xa9:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xaa:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xab:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xac:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xad:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xae:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xaf:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xb0:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb1:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb2:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb3:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb4:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb5:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb6:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb7:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xb8:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xb9:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xba:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xbb:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xbc:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xbd:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xbe:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xbf:
+      output.opCode = "SUBX";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xc0:
+      output.opCode = "RETNZ";
+      output.z80OPCode = "RET NZ";
+      return output;
+    case 0xc1:
+      output.opCode = "POPR";
+      output.z80OPCode = "POP";
+      return output;
+    case 0xc2:
+      output.opCode = "JMPNZ";
+      output.z80OPCode = "JP NZ";
+      return output;
+    case 0xc3:
+      output.opCode = "JMP";
+      output.z80OPCode = "JP";
+      return output;
+    case 0xc4:
+      output.opCode = "PUSHNZ";
+      output.z80OPCode = "CALL NZ";
+      return output;
+    case 0xc5:
+      output.opCode = "PUSH";
+      output.z80OPCode = "PUSH";
+      return output;
+    case 0xc6:
+      output.opCode = "INXR";
+      output.z80OPCode = "ADD";
+      return output;
+    case 0xc7:
+      output.opCode = "RST0";
+      output.z80OPCode = "RST 00";
+      return output;
+    case 0xc8:
+      output.opCode = "RETZ";
+      output.z80OPCode = "RET Z";
+      return output;
+    case 0xc9:
+      output.opCode = "RET";
+      output.z80OPCode = "RET";
+      return output;
+    case 0xca:
+      output.opCode = "JMPZ";
+      output.z80OPCode = "JP Z";
+      return output;
+    case 0xcb:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0xcc:
+      output.opCode = "CALLZ";
+      output.z80OPCode = "CALL Z";
+      return output;
+    case 0xcd:
+      output.opCode = "CALL";
+      output.z80OPCode = "CALL";
+      return output;
+    case 0xce:
+      output.opCode = "ICXR";
+      output.z80OPCode = "ADC";
+      return output;
+    case 0xcf:
+      output.opCode = "RST1";
+      output.z80OPCode = "RST08";
+      return output;
+    case 0xd0:
+      output.opCode = "RETNC";
+      output.z80OPCode = "RET NC";
+      return output;
+    case 0xd1:
+      output.opCode = "POPR";
+      output.z80OPCode = "POP";
+      return output;
+    case 0xd2:
+      output.opCode = "JMPNP";
+      output.z80OPCode = "JP NC";
+      return output;
+    case 0xd3:
+      output.opCode = "HWOUT";
+      output.z80OPCode = "OUT";
+      return output;
+    case 0xd4:
+      output.opCode = "CALLNC";
+      output.z80OPCode = "CALL NC";
+      return output;
+    case 0xd5:
+      output.opCode = "PUSH";
+      output.z80OPCode = "PUSH";
+      return output;
+    case 0xd6:
+      output.opCode = "DCXR";
+      output.z80OPCode = "SUB";
+      return output;
+    case 0xd7:
+      output.opCode = "RST10";
+      output.z80OPCode = "RST 10";
+      return output;
+    case 0xd8:
+      output.opCode = "RETC";
+      output.z80OPCode = "RET";
+      return output;
+    case 0xd9:
+      output.opCode = "NOP";
+      output.z80OPCode = "NOP";
+      return output;
+    case 0xda:
+      output.opCode = "JMPC";
+      output.z80OPCode = "JP";
+      return output;
+    case 0xdb:
+      output.opCode = "HWIN";
+      output.z80OPCode = "EXX";
+      return output;
+    case 0xdc:
+      output.opCode = "CALLC";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xdd:
+      output.opCode = "**";
+      output.z80OPCode = "**";
+      return output;
+    case 0xde:
+      output.opCode = "DEXR";
+      output.z80OPCode = "SBC";
+      return output;
+    case 0xdf:
+      output.opCode = "RST18";
+      output.z80OPCode = "RST 18";
+      return output;
+    case 0xe0:
+      output.opCode = "RETNP";
+      output.z80OPCode = "RET";
+      return output;
+    case 0xe1:
+      output.opCode = "POPR";
+      output.z80OPCode = "POP";
+      return output;
+    case 0xe2:
+      output.opCode = "JMPNP";
+      output.z80OPCode = "JP PO";
+      return output;
+    case 0xe3:
+      output.opCode = "XCHM";
+      output.z80OPCode = "EX";
+      return output;
+    case 0xe4:
+      output.opCode = "UKNOP";
+      output.z80OPCode = "CALL";
+      return output;
+    case 0xe5:
+      output.opCode = "PUSH";
+      output.z80OPCode = "PUSH";
+      return output;
+    case 0xe6:
+      output.opCode = "ANDR";
+      output.z80OPCode = "AND";
+      return output;
+    case 0xe7:
+      output.opCode = "RST20";
+      output.z80OPCode = "RST 20";
+      return output;
+    case 0xe8:
+      output.opCode = "RETP";
+      output.z80OPCode = "RET";
+      return output;
+    case 0xe9:
+      output.opCode = "JMP";
+      output.z80OPCode = "JP";
+      return output;
+    case 0xea:
+      output.opCode = "JMPP";
+      output.z80OPCode = "JP";
+      return output;
+    case 0xeb:
+      output.opCode = "XCHR";
+      output.z80OPCode = "EX";
+      return output;
+    case 0xec:
+      output.opCode = "UKNOP";
+      output.z80OPCode = "CALL";
+      return output;
+    case 0xed:
+      output.opCode = "NOP";
+      output.z80OPCode = "UKNOP";
+      return output;
+    case 0xee:
+      output.opCode = "XORR";
+      output.z80OPCode = "XOR";
+      return output;
+    case 0xef:
+      output.opCode = "RST28";
+      output.z80OPCode = "RST 28";
+      return output;
+    case 0xf0:
+      output.opCode = "UKNOP";
+      output.z80OPCode = "RET";
+      return output;
+    case 0xf1:
+      output.opCode = "POPR";
+      output.z80OPCode = "POP";
+      return output;
+    case 0xf2:
+      output.opCode = "JMPNS";
+      output.z80OPCode = "JP";
+      return output;
+    case 0xf3:
+      output.opCode = "DIF";
+      output.z80OPCode = "DI";
+      return output;
+    case 0xf4:
+      output.opCode = "CALLS";
+      output.z80OPCode = "CALL";
+      return output;
+    case 0xf5:
+      output.opCode = "PUSH";
+      output.z80OPCode = "PUSH";
+      return output;
+    case 0xf6:
+      output.opCode = "ORR";
+      output.z80OPCode = "OR";
+      return output;
+    case 0xf7:
+      output.opCode = "RST30";
+      output.z80OPCode = "RST 30";
+      return output;
+    case 0xf8:
+      output.opCode = "RETS";
+      output.z80OPCode = "RET";
+      return output;
+    case 0xf9:
+      output.opCode = "LD2R";
+      output.z80OPCode = "LD";
+      return output;
+    case 0xfa:
+      output.opCode = "JMPS";
+      output.z80OPCode = "JP";
+      return output;
+    case 0xfb:
+      output.opCode = "SIF";
+      output.z80OPCode = "EI";
+      return output;
+    case 0xfc:
+      output.opCode = "CALLS";
+      output.z80OPCode = "CALL";
+      return output;
+    case 0xfd:
+      output.opCode = "**";
+      output.z80OPCode = "**";
+      return output;
+    case 0xfe:
+      output.opCode = "DCXR";
+      output.z80OPCode = "CP";
+      return output;
+    case 0xff:
+      output.opCode = "RST38";
+      output.z80OPCode = "RST 38";
+      return output;
+  }
+};
