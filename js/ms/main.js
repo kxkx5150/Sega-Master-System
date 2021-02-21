@@ -17,9 +17,9 @@ class SEGAMS {
     this.timerID2 = null;
     this.interval = 0;
     this.info = {
-      cpu:false,
-      mem:false,
-    }
+      cpu: false,
+      mem: false,
+    };
     this.INPUT = {
       A: 16,
       B: 32,
@@ -31,9 +31,9 @@ class SEGAMS {
     this.io = new IO(this);
     this.mem = new RAM(this);
     this.rom = new ROM(this);
-    this.sound =  new SOUND(this);
+    this.sound = new SOUND(this);
     this.vdp = new VDP(this);
-    this.cpu = new CPU(this,this.mem);
+    this.cpu = new CPU(this, this.mem);
     this.gamepad = new GAMEPAD(this);
     this.audio_init();
   }
@@ -88,13 +88,13 @@ class SEGAMS {
     this.event_next_event = this.tstatesPerHblank;
     this.tstates -= this.tstatesPerHblank;
 
-    let cb = this.sound.polltime.bind(this)
+    let cb = this.sound.polltime.bind(this);
     this.cpu.z80_do_opcodes(cb);
     var vdp_status = this.vdp.vdp_hblank();
     var irq = vdp_status & 3;
     this.cpu.z80_set_irq(irq);
     if (vdp_status & 4) {
-      if(this.interval % 3 === 0)this.gamepad.updateGamepad();
+      if (this.interval % 3 === 0) this.gamepad.updateGamepad();
       this.interval++;
       this.ctx.putImageData(this.imageData, 0, 0);
       return true;

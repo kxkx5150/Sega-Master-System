@@ -62,15 +62,14 @@ class GAMEPAD {
     this.createOptions("b_button");
     this.loadValue();
 
-    document.getElementById("start_button").addEventListener("change",this.setValue.bind(this))
-    document.getElementById("select_button").addEventListener("change",this.setValue.bind(this))
-    document.getElementById("a_button").addEventListener("change",this.setValue.bind(this))
-    document.getElementById("b_button").addEventListener("change",this.setValue.bind(this))
-
+    document.getElementById("start_button").addEventListener("change", this.setValue.bind(this));
+    document.getElementById("select_button").addEventListener("change", this.setValue.bind(this));
+    document.getElementById("a_button").addEventListener("change", this.setValue.bind(this));
+    document.getElementById("b_button").addEventListener("change", this.setValue.bind(this));
   }
-  loadValue(){
+  loadValue() {
     let lobj = localStorage.getItem("button_settings");
-    if(lobj){
+    if (lobj) {
       this.buttonMap = JSON.parse(lobj);
     }
     document.getElementById("start_button").value = this.buttonMap.START.no;
@@ -78,32 +77,30 @@ class GAMEPAD {
     document.getElementById("a_button").value = this.buttonMap.A.no;
     document.getElementById("b_button").value = this.buttonMap.B.no;
   }
-  setValue(){
-    this.buttonMap.START.no = document.getElementById("start_button").value-0
-    this.buttonMap.SELECT.no = document.getElementById("select_button").value-0
-    this.buttonMap.A.no = document.getElementById("a_button").value-0
-    this.buttonMap.B.no = document.getElementById("b_button").value-0
-    localStorage.setItem("button_settings",JSON.stringify(this.buttonMap))
+  setValue() {
+    this.buttonMap.START.no = document.getElementById("start_button").value - 0;
+    this.buttonMap.SELECT.no = document.getElementById("select_button").value - 0;
+    this.buttonMap.A.no = document.getElementById("a_button").value - 0;
+    this.buttonMap.B.no = document.getElementById("b_button").value - 0;
+    localStorage.setItem("button_settings", JSON.stringify(this.buttonMap));
   }
   createOptions(cont_id) {
-    let cont = document.getElementById(cont_id)
+    let cont = document.getElementById(cont_id);
     for (var i = 0; i < 20; i++) {
       var option = document.createElement("option");
       option.value = i;
-      option.text = "Button "+i;
+      option.text = "Button " + i;
       cont.appendChild(option);
     }
   }
   keyDown(player, button) {
     if (player === 1) {
       this.core.io.joystick &= ~button;
-
     }
   }
   keyUp(player, button) {
     if (player === 1) {
       this.core.io.joystick |= button;
-
     }
   }
   checkAxes(axes) {
@@ -182,8 +179,8 @@ class GAMEPAD {
   checkButton(name, buttons) {
     for (var i = 0; i < buttons.length; i++) {
       let btn = buttons[i];
-      if(btn.pressed){
-        this.button_info_elem.textContent = "Button "+i;
+      if (btn.pressed) {
+        this.button_info_elem.textContent = "Button " + i;
       }
       if (i === this.buttonMap[name].no) {
         if (btn.pressed) {
