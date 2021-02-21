@@ -16,10 +16,9 @@ class SEGAMS {
     this.timerID1 = null;
     this.timerID2 = null;
     this.info = {
-      cpu:true,
+      cpu:false,
       mem:false,
     }
-
     this.io = new IO(this);
     this.mem = new RAM(this);
     this.rom = new ROM(this);
