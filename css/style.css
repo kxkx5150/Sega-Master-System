@@ -26,12 +26,12 @@ html{
 body {
     margin: 0;
     padding: 0;
-    background-color: #000000;
+    background-color: #151515;
     color: #ffffff;
     font-family: arial, tahoma;
     font-size: 13px;
 }
-#screen {
+#output {
     width: 256px;
     height: 192px;
     margin-left: auto;

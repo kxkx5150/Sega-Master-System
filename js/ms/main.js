@@ -2,7 +2,7 @@ class SEGAMS {
   constructor(canvas_id) {
     this.canvas = document.getElementById(canvas_id);
     this.ctx = this.canvas.getContext("2d");
-    this.imageData = this.ctx.getImageData(0, 0, 256, 192);
+    this.imageData = this.ctx.createImageData(256, 192);
     this.fb32 = new Uint32Array(this.imageData.data.buffer);
     this.actx = new AudioContext();
     this.fps = 60;
@@ -11,7 +11,7 @@ class SEGAMS {
     this.tstatesPerHblank = Math.ceil(this.cpuHz / (313 * this.fps)) | 0;
     this.targetTimeout = 1000 / this.fps;
     this.tstates = 0;
-    this.event_next_event;
+    this.event_next_event = 0;
     this.lastFrame = null;
     this.timerID1 = null;
     this.timerID2 = null;
@@ -25,15 +25,16 @@ class SEGAMS {
     this.sound =  new SOUND(this);
     this.vdp = new VDP(this);
     this.cpu = new CPU(this,this.mem);
+    this.audio_init();
   }
   init() {
     this.cpu.z80_init();
     this.vdp.vdp_init();
-    this.audio_init();
-    this.reset();
   }
   loadRom(bin) {
+    if (this.actx) this.actx.suspend();
     this.init();
+    this.reset();
     this.rom.load(bin);
     this.audio_enable(true);
     this.run();
@@ -79,13 +80,15 @@ class SEGAMS {
     return false;
   }
   reset() {
+    if (this.actx) this.actx.suspend();
     clearTimeout(this.timerID1);
     clearTimeout(this.timerID2);
     this.tstates = 0;
     this.lastFrame = null;
+    this.event_next_event = 0;
 
     this.vdp.vdp_reset();
-    this.audio_reset();
+    this.sound.reset();
     this.cpu.z80_reset();
     this.io.reset();
     this.mem.reset();
@@ -103,8 +106,5 @@ class SEGAMS {
   audio_enable(enable) {
     this.sound.enable(enable);
     if (this.actx) this.actx.resume();
-  }
-  audio_reset() {
-    this.sound.reset();
   }
 }

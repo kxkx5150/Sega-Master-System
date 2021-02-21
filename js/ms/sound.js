@@ -4,11 +4,11 @@ class SOUND {
     this.enabled = true;
     this.sampleDecrement = 3546893.0 / 16.0 / this.core.sampleRate;
     this.samplesPerCycle = this.core.sampleRate / this.core.cpuHz;
+    this.buffer = new Float64Array(this.maxBufferSize);
+    this.maxBufferSize = 4096;
     this.cyclesPending = 0;
     this.residual = 0;
     this.position = 0;
-    this.maxBufferSize = 4096;
-    this.buffer = new Float64Array(this.maxBufferSize);
     this.lfsr = 0;
     this.latchedChannel = 0;
     this.register = [0, 0, 0, 0];
@@ -37,9 +37,19 @@ class SOUND {
     for (var i = 0; i < 3; ++i) {
       this.counter[i] = this.volume[i] = this.register[i] = 0;
     }
-    this.noisePoked();
-    this.advance(100000);
+    this.buffer = new Float64Array(this.maxBufferSize);
     this.cyclesPending = 0;
+    this.residual = 0;
+    this.position = 0;
+    this.lfsr = 0;
+    this.latchedChannel = 0;
+    this.register = [0, 0, 0, 0];
+    this.counter = [0, 0, 0, 0];
+    this.outputBit = [false, false, false, false];
+    this.volume = [0, 0, 0, 0];
+    this.generators = [null, null, null, null];
+    this.volumeTable = [];
+    this.init();
   }
   addFor(channel) {
     channel = channel | 0;

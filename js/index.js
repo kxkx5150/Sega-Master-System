@@ -22,7 +22,7 @@ resizeCanvas = () => {
     const wh = window.innerHeight;
     const ww = window.innerWidth;
     const nw = 256;
-    const nh = 224;
+    const nh = 192;
     const waspct = ww / wh;
     const naspct = nw / nh;
 
@@ -32,7 +32,7 @@ resizeCanvas = () => {
       var val = ww / nw;
     }
     let ctrldiv = document.querySelector(".ctrl_div");
-    canvas.style.height = 224 * val - ctrldiv.offsetHeight - 18 + "px";
+    canvas.style.height = 192 * val - ctrldiv.offsetHeight - 18 + "px";
     canvas.style.width = 256 * val - 24 + "px";
   }, 1200);
 };
