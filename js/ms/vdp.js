@@ -1,490 +1,409 @@
-var vram = [];
-var vramUntwiddled = [];
-var vdp_regs = [];
-var palette = [];
-var paletteR = [];
-var paletteG = [];
-var paletteB = [];
-var paletteRGB = [];
-
-var vdp_addr_state = 0;
-var vdp_mode_select = 0;
-var vdp_addr_latch = 0;
-var vdp_addr = 0;
-var vdp_current_line = 0;
-var vdp_status = 0;
-var vdp_pending_hblank = false;
-var vdp_hblank_counter = 0;
-
-function vdp_writeaddr(val) {
-  if (vdp_addr_state === 0) {
-    vdp_addr_state = 1;
-    vdp_addr_latch = val;
-  } else {
-    vdp_addr_state = 0;
-    switch (val >>> 6) {
-      case 0:
-      case 1:
-        vdp_mode_select = 0;
-        vdp_addr = vdp_addr_latch | ((val & 0x3f) << 8);
-        break;
-      case 2:
-        var regnum = val & 0xf;
-        vdp_regs[regnum] = vdp_addr_latch;
-        switch (regnum) {
-          case 7:
-            update_border();
-            break;
-        }
-        break;
-      case 3:
-        vdp_mode_select = 1;
-        vdp_addr = vdp_addr_latch & 0x1f;
-        break;
+class VDP {
+  constructor(core) {
+    this.core = core;
+    this.vram = new Uint8Array(0x4000);
+    this.vramUntwiddled = new Uint8Array(0x8000);
+    this.vdp_regs = new Uint8Array(16);
+    this.palette = new Uint8Array(32);
+    this.paletteR = new Uint8Array(32);
+    this.paletteG = new Uint8Array(32);
+    this.paletteB = new Uint8Array(32);
+    this.paletteRGB = new Uint32Array(32);
+    this.currentFrame = 1;
+    this.vdp_addr_state = 0;
+    this.vdp_mode_select = 0;
+    this.vdp_addr_latch = 0;
+    this.vdp_addr = 0;
+    this.vdp_current_line = 0;
+    this.vdp_status = 0;
+    this.vdp_pending_hblank = false;
+    this.vdp_hblank_counter = 0;
+    this.prev_border = null;
+    this.borderColourCss = null;
+  }
+  vdp_writeaddr(val) {
+    if (this.vdp_addr_state === 0) {
+      this.vdp_addr_state = 1;
+      this.vdp_addr_latch = val;
+    } else {
+      this.vdp_addr_state = 0;
+      switch (val >>> 6) {
+        case 0:
+        case 1:
+          this.vdp_mode_select = 0;
+          this.vdp_addr = this.vdp_addr_latch | ((val & 0x3f) << 8);
+          break;
+        case 2:
+          var regnum = val & 0xf;
+          this.vdp_regs[regnum] = this.vdp_addr_latch;
+          switch (regnum) {
+            case 7:
+              this.update_border();
+              break;
+          }
+          break;
+        case 3:
+          this.vdp_mode_select = 1;
+          this.vdp_addr = this.vdp_addr_latch & 0x1f;
+          break;
+      }
     }
   }
-}
-
-function vdp_writepalette(val) {
-  function expandBits(val) {
-    var v = val & 3;
-    v |= v << 2;
-    v |= v << 4;
-    return v;
+  update_border() {
+    var borderIndex = 16 + (this.vdp_regs[7] & 0xf);
+    if (this.paletteRGB[borderIndex] === this.prev_border) return;
+    this.prev_border = this.paletteRGB[borderIndex];
+    this.borderColourCss =
+      "rgb(" +
+      this.paletteR[borderIndex] +
+      "," +
+      this.paletteG[borderIndex] +
+      "," +
+      this.paletteB[borderIndex] +
+      ")";
   }
+  vdp_writepalette(val) {
+    let expandBits = (val) => {
+      var v = val & 3;
+      v |= v << 2;
+      v |= v << 4;
+      return v;
+    };
 
-  const r = expandBits(val);
-  const g = expandBits(val >>> 2);
-  const b = expandBits(val >>> 4);
-  const pal_addr = vdp_addr & 0x1f;
-  paletteR[pal_addr] = r;
-  paletteG[pal_addr] = g;
-  paletteB[pal_addr] = b;
-  paletteRGB[pal_addr] = 0xff000000 | (b << 16) | (g << 8) | r;
-  palette[pal_addr] = val;
-  vdp_addr = (vdp_addr + 1) & 0x3fff;
-  update_border();
-}
-
-function vdp_writeram(val) {
-  vram[vdp_addr] = val;
-  var planarBase = vdp_addr & 0x3ffc;
-  var twiddledBase = planarBase * 2;
-  var val0 = vram[planarBase];
-  var val1 = vram[planarBase + 1];
-  var val2 = vram[planarBase + 2];
-  var val3 = vram[planarBase + 3];
-  for (var i = 0; i < 8; ++i) {
-    var effectiveBit = 7 - i;
-    var index =
-      ((val0 >>> effectiveBit) & 1) |
-      (((val1 >>> effectiveBit) & 1) << 1) |
-      (((val2 >>> effectiveBit) & 1) << 2) |
-      (((val3 >>> effectiveBit) & 1) << 3);
-    vramUntwiddled[twiddledBase + i] = index;
+    const r = expandBits(val);
+    const g = expandBits(val >>> 2);
+    const b = expandBits(val >>> 4);
+    const pal_addr = this.vdp_addr & 0x1f;
+    this.paletteR[pal_addr] = r;
+    this.paletteG[pal_addr] = g;
+    this.paletteB[pal_addr] = b;
+    this.paletteRGB[pal_addr] = 0xff000000 | (b << 16) | (g << 8) | r;
+    this.palette[pal_addr] = val;
+    this.vdp_addr = (this.vdp_addr + 1) & 0x3fff;
+    this.update_border();
   }
-  vdp_addr = (vdp_addr + 1) & 0x3fff;
-}
-
-function vdp_writebyte(val) {
-  vdp_addr_state = 0;
-  if (vdp_mode_select === 0) {
-    vdp_writeram(val);
-  } else {
-    vdp_writepalette(val);
-  }
-}
-
-function vdp_readram() {
-  res = vram[vdp_addr];
-  vdp_addr = (vdp_addr + 1) & 0x3fff;
-  return res;
-}
-
-function vdp_readpalette() {
-  res = palette[vdp_addr & 0x1f];
-  vdp_addr = (vdp_addr + 1) & 0x3fff;
-  return res;
-}
-
-function vdp_readbyte() {
-  vdp_addr_state = 0;
-  if (vdp_mode_select === 0) {
-    return vdp_readram();
-  } else {
-    return vdp_readpalette();
-  }
-}
-
-var prev_border = null;
-var borderColourCss = null;
-function update_border() {
-  var borderIndex = 16 + (vdp_regs[7] & 0xf);
-  if (paletteRGB[borderIndex] === prev_border) return;
-  prev_border = paletteRGB[borderIndex];
-
-  borderColourCss =
-    "rgb(" + paletteR[borderIndex] + "," + paletteG[borderIndex] + "," + paletteB[borderIndex] + ")";
-}
-
-function vdp_readstatus() {
-  res = vdp_status;
-
-  vdp_status &= 0x1f;
-  vdp_pending_hblank = false;
-  that.cpu.z80_set_irq(false);
-  vdp_addr_state = 0;
-  return res;
-}
-
-function findSprites(line) {
-  var spriteInfo = (vdp_regs[5] & 0x7e) << 7;
-  var active = [];
-  var spriteHeight = 8;
-  var i;
-  if (vdp_regs[1] & 2) {
-    spriteHeight = 16;
-  }
-  for (i = 0; i < 64; i++) {
-    var y = vram[spriteInfo + i];
-    if (y === 208) {
-      break;
+  vdp_writeram(val) {
+    this.vram[this.vdp_addr] = val;
+    var planarBase = this.vdp_addr & 0x3ffc;
+    var twiddledBase = planarBase * 2;
+    var val0 = this.vram[planarBase];
+    var val1 = this.vram[planarBase + 1];
+    var val2 = this.vram[planarBase + 2];
+    var val3 = this.vram[planarBase + 3];
+    for (var i = 0; i < 8; ++i) {
+      var effectiveBit = 7 - i;
+      var index =
+        ((val0 >>> effectiveBit) & 1) |
+        (((val1 >>> effectiveBit) & 1) << 1) |
+        (((val2 >>> effectiveBit) & 1) << 2) |
+        (((val3 >>> effectiveBit) & 1) << 3);
+      this.vramUntwiddled[twiddledBase + i] = index;
     }
-    if (y >= 240) y -= 256;
-    if (line >= y && line < y + spriteHeight) {
-      if (active.length === 8) {
-        vdp_status |= 0x40;
+    this.vdp_addr = (this.vdp_addr + 1) & 0x3fff;
+  }
+  vdp_writebyte(val) {
+    this.vdp_addr_state = 0;
+    if (this.vdp_mode_select === 0) {
+      this.vdp_writeram(val);
+    } else {
+      this.vdp_writepalette(val);
+    }
+  }
+  vdp_readram() {
+    let res = this.vram[this.vdp_addr];
+    this.vdp_addr = (this.vdp_addr + 1) & 0x3fff;
+    return res;
+  }
+
+  vdp_readpalette() {
+    let res = this.palette[this.vdp_addr & 0x1f];
+    this.vdp_addr = (this.vdp_addr + 1) & 0x3fff;
+    return res;
+  }
+  vdp_readbyte() {
+    this.vdp_addr_state = 0;
+    if (this.vdp_mode_select === 0) {
+      return this.vdp_readram();
+    } else {
+      return this.vdp_readpalette();
+    }
+  }
+  vdp_readstatus() {
+    let res = this.vdp_status;
+    this.vdp_status &= 0x1f;
+    this.vdp_pending_hblank = false;
+    this.core.cpu.z80_set_irq(false);
+    this.vdp_addr_state = 0;
+    return res;
+  }
+  findSprites(line) {
+    var spriteInfo = (this.vdp_regs[5] & 0x7e) << 7;
+    var active = [];
+    var spriteHeight = 8;
+    var i;
+    if (this.vdp_regs[1] & 2) {
+      spriteHeight = 16;
+    }
+    for (i = 0; i < 64; i++) {
+      var y = this.vram[spriteInfo + i];
+      if (y === 208) {
         break;
       }
-      active.push([vram[spriteInfo + 128 + i * 2], vram[spriteInfo + 128 + i * 2 + 1], y]);
+      if (y >= 240) y -= 256;
+      if (line >= y && line < y + spriteHeight) {
+        if (active.length === 8) {
+          this.vdp_status |= 0x40;
+          break;
+        }
+        active.push([this.vram[spriteInfo + 128 + i * 2], this.vram[spriteInfo + 128 + i * 2 + 1], y]);
+      }
+    }
+    return active;
+  }
+  rasterize_background(lineAddr, pixelOffset, tileData, tileDef, transparent) {
+    lineAddr = lineAddr | 0;
+    pixelOffset = pixelOffset | 0;
+    tileData = tileData | 0;
+    tileDef = (tileDef | 0) * 2;
+    var i, tileDefInc;
+    if (tileData & (1 << 9)) {
+      tileDefInc = -1;
+      tileDef += 7;
+    } else {
+      tileDefInc = 1;
+    }
+    const paletteOffset = tileData & (1 << 11) ? 16 : 0;
+    var index;
+    if (transparent && paletteOffset === 0) {
+      for (i = 0; i < 8; i++) {
+        index = this.vramUntwiddled[tileDef];
+        tileDef += tileDefInc;
+        if (index !== 0) this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+        pixelOffset = (pixelOffset + 1) & 255;
+      }
+    } else {
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      tileDef += tileDefInc;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+      pixelOffset = (pixelOffset + 1) & 255;
+
+      index = this.vramUntwiddled[tileDef] + paletteOffset;
+      this.core.fb32[lineAddr + pixelOffset] = this.paletteRGB[index];
+    }
+  }
+  clear_background(lineAddr, pixelOffset) {
+    lineAddr = lineAddr | 0;
+    pixelOffset = pixelOffset | 0;
+    var i;
+    const rgb = this.paletteRGB[0];
+    for (i = 0; i < 8; ++i) {
+      this.core.fb32[lineAddr + pixelOffset] = rgb;
+      pixelOffset = (pixelOffset + 1) & 255;
     }
   }
 
-  return active;
-}
-
-function dumpSprites() {
-  var spriteInfo = (vdp_regs[5] & 0x7e) << 7;
-  for (i = 0; i < 64; i++) {
-    var y = vram[spriteInfo + i];
-    var x = vram[spriteInfo + 128 + i * 2];
-    var t = vram[spriteInfo + 128 + i * 2 + 1];
-    console.log(i + " x: " + x + " y: " + y + " t: " + t);
+  rasterize_background_line(lineAddr, pixelOffset, nameAddr, yMod) {
+    lineAddr = lineAddr | 0;
+    pixelOffset = pixelOffset | 0;
+    nameAddr = nameAddr | 0;
+    const yOffset = (yMod | 0) * 4;
+    for (var i = 0; i < 32; i++) {
+      var tileData = this.vram[nameAddr + i * 2] | (this.vram[nameAddr + i * 2 + 1] << 8);
+      var tileNum = tileData & 511;
+      var tileDef = 32 * tileNum;
+      if (tileData & (1 << 10)) {
+        tileDef += 28 - yOffset;
+      } else {
+        tileDef += yOffset;
+      }
+      if ((tileData & (1 << 12)) === 0) {
+        this.rasterize_background(lineAddr, pixelOffset, tileData, tileDef, false);
+      } else {
+        this.clear_background(lineAddr, pixelOffset);
+      }
+      pixelOffset = (pixelOffset + 8) & 255;
+    }
   }
-}
-function showAllTiles() {
-  var tile = 0;
-  for (var y = 0; y < 224; y += 8) {
-    var effectiveLine = y + vdp_regs[9];
+  rasterize_foreground_line(lineAddr, pixelOffset, nameAddr, yMod) {
+    lineAddr = lineAddr | 0;
+    pixelOffset = pixelOffset | 0;
+    nameAddr = nameAddr | 0;
+    const yOffset = (yMod | 0) * 4;
+    for (var i = 0; i < 32; i++) {
+      var tileData = this.vram[nameAddr + i * 2] | (this.vram[nameAddr + i * 2 + 1] << 8);
+      if ((tileData & (1 << 12)) === 0) continue;
+      var tileNum = tileData & 511;
+      var tileDef = 32 * tileNum;
+      if (tileData & (1 << 10)) {
+        tileDef += 28 - yOffset;
+      } else {
+        tileDef += yOffset;
+      }
+      this.rasterize_background(lineAddr, (i * 8 + pixelOffset) & 0xff, tileData, tileDef, true);
+    }
+  }
+  rasterize_sprites(line, lineAddr, pixelOffset, sprites) {
+    lineAddr = lineAddr | 0;
+    pixelOffset = pixelOffset | 0;
+    const spriteBase = this.vdp_regs[6] & 4 ? 0x2000 : 0;
+
+    for (var i = 0; i < 256; ++i) {
+      var xPos = i;
+      var spriteFoundThisX = false;
+      var writtenTo = false;
+      var minDistToNext = 256;
+      for (var k = 0; k < sprites.length; k++) {
+        var sprite = sprites[k];
+        var offset = xPos - sprite[0];
+
+        if (offset < 0) {
+          var distToSprite = -offset;
+
+          if (distToSprite < minDistToNext) minDistToNext = distToSprite;
+          continue;
+        }
+        if (offset >= 8) continue;
+        spriteFoundThisX = true;
+        var spriteLine = line - sprite[2];
+        var spriteAddr = spriteBase + sprite[1] * 32 + spriteLine * 4;
+        var untwiddledAddr = spriteAddr * 2 + offset;
+        var index = this.vramUntwiddled[untwiddledAddr];
+        if (index === 0) {
+          continue;
+        }
+        if (writtenTo) {
+          this.vdp_status |= 0x20;
+          break;
+        }
+        this.core.fb32[lineAddr + ((pixelOffset + i - this.vdp_regs[8]) & 0xff)] = this.paletteRGB[
+          16 + index
+        ];
+        writtenTo = true;
+      }
+      if (!spriteFoundThisX && minDistToNext > 1) {
+        i += minDistToNext - 1;
+      }
+    }
+  }
+  border_clear(lineAddr, count) {
+    lineAddr = lineAddr | 0;
+    count = count | 0;
+    const borderIndex = 16 + (this.vdp_regs[7] & 0xf);
+    const borderRGB = this.paletteRGB[borderIndex];
+    for (var i = 0; i < count; i++) this.core.fb32[lineAddr + i] = borderRGB;
+  }
+  rasterize_line(line) {
+    line = line | 0;
+    const lineAddr = (line * 256) | 0;
+    if ((this.vdp_regs[1] & 64) === 0) {
+      this.border_clear(lineAddr, 256);
+      return;
+    }
+
+    var effectiveLine = line + this.vdp_regs[9];
     if (effectiveLine >= 224) {
       effectiveLine -= 224;
     }
-    var nameAddr = ((vdp_regs[2] << 10) & 0x3800) + (effectiveLine >>> 3) * 64;
-    for (var i = 0; i < 32; i++) {
-      vram[nameAddr + i * 2] = tile & 0xff;
-      vram[nameAddr + i * 2 + 1] = (tile >>> 8) & 1;
-      tile++;
+    const sprites = this.findSprites(line);
+    const pixelOffset = this.vdp_regs[0] & 64 && line < 16 ? 0 : this.vdp_regs[8];
+    const nameAddr = ((this.vdp_regs[2] << 10) & 0x3800) + (effectiveLine >>> 3) * 64;
+    const yMod = effectiveLine & 7;
+
+    this.rasterize_background_line(lineAddr, pixelOffset, nameAddr, yMod);
+    if (sprites.length) this.rasterize_sprites(line, lineAddr, pixelOffset, sprites);
+    this.rasterize_foreground_line(lineAddr, pixelOffset, nameAddr, yMod);
+
+    if (this.vdp_regs[0] & (1 << 5)) {
+      this.border_clear(lineAddr, 8);
     }
   }
-  var temp = findSprites;
-  findSprites = function () {
-    return [];
-  };
-  for (y = 0; y < 192; ++y) rasterize_line(y);
-  paintScreen();
-  findSprites = temp;
-  breakpoint();
-}
-
-function dumpTile(tileNum) {
-  var tileDef = tileNum * 32;
-  for (var y = 0; y < 8; ++y) {
-    var dumpage = "";
-    for (var x = 0; x < 4; ++x) {
-      dumpage += hexbyte(vram[tileDef + y * 4 + x]);
-    }
-    console.log(dumpage);
-  }
-}
-
-const reverse_table = (function () {
-  var table = new Uint8Array(256);
-  for (var i = 0; i < 256; ++i) {
-    var j = i;
-    var reversed = 0;
-    for (var k = 0; k < 8; ++k) {
-      reversed <<= 1;
-      if (j & 1) reversed |= 1;
-      j >>>= 1;
-    }
-    table[i] = reversed;
-  }
-  return table;
-})();
-
-function rasterize_background(lineAddr, pixelOffset, tileData, tileDef, transparent) {
-  lineAddr = lineAddr | 0;
-  pixelOffset = pixelOffset | 0;
-  tileData = tileData | 0;
-  tileDef = (tileDef | 0) * 2;
-  var i, tileDefInc;
-  if (tileData & (1 << 9)) {
-    tileDefInc = -1;
-    tileDef += 7;
-  } else {
-    tileDefInc = 1;
-  }
-  const paletteOffset = tileData & (1 << 11) ? 16 : 0;
-  var index;
-  if (transparent && paletteOffset === 0) {
-    for (i = 0; i < 8; i++) {
-      index = vramUntwiddled[tileDef];
-      tileDef += tileDefInc;
-      if (index !== 0) that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-      pixelOffset = (pixelOffset + 1) & 255;
-    }
-  } else {
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    tileDef += tileDefInc;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-    pixelOffset = (pixelOffset + 1) & 255;
-
-    index = vramUntwiddled[tileDef] + paletteOffset;
-    that.fb32[lineAddr + pixelOffset] = paletteRGB[index];
-  }
-}
-
-function clear_background(lineAddr, pixelOffset) {
-  lineAddr = lineAddr | 0;
-  pixelOffset = pixelOffset | 0;
-  var i;
-  const rgb = paletteRGB[0];
-  for (i = 0; i < 8; ++i) {
-    that.fb32[lineAddr + pixelOffset] = rgb;
-    pixelOffset = (pixelOffset + 1) & 255;
-  }
-}
-
-function rasterize_background_line(lineAddr, pixelOffset, nameAddr, yMod) {
-  lineAddr = lineAddr | 0;
-  pixelOffset = pixelOffset | 0;
-  nameAddr = nameAddr | 0;
-  const yOffset = (yMod | 0) * 4;
-  for (var i = 0; i < 32; i++) {
-    var tileData = vram[nameAddr + i * 2] | (vram[nameAddr + i * 2 + 1] << 8);
-    var tileNum = tileData & 511;
-    var tileDef = 32 * tileNum;
-    if (tileData & (1 << 10)) {
-      tileDef += 28 - yOffset;
-    } else {
-      tileDef += yOffset;
-    }
-    if ((tileData & (1 << 12)) === 0) {
-      rasterize_background(lineAddr, pixelOffset, tileData, tileDef, false);
-    } else {
-      clear_background(lineAddr, pixelOffset);
-    }
-    pixelOffset = (pixelOffset + 8) & 255;
-  }
-}
-
-function rasterize_foreground_line(lineAddr, pixelOffset, nameAddr, yMod) {
-  lineAddr = lineAddr | 0;
-  pixelOffset = pixelOffset | 0;
-  nameAddr = nameAddr | 0;
-  const yOffset = (yMod | 0) * 4;
-  for (var i = 0; i < 32; i++) {
-    var tileData = vram[nameAddr + i * 2] | (vram[nameAddr + i * 2 + 1] << 8);
-    if ((tileData & (1 << 12)) === 0) continue;
-    var tileNum = tileData & 511;
-    var tileDef = 32 * tileNum;
-    if (tileData & (1 << 10)) {
-      tileDef += 28 - yOffset;
-    } else {
-      tileDef += yOffset;
-    }
-    rasterize_background(lineAddr, (i * 8 + pixelOffset) & 0xff, tileData, tileDef, true);
-  }
-}
-
-function rasterize_sprites(line, lineAddr, pixelOffset, sprites) {
-  lineAddr = lineAddr | 0;
-  pixelOffset = pixelOffset | 0;
-  const spriteBase = vdp_regs[6] & 4 ? 0x2000 : 0;
-
-  for (var i = 0; i < 256; ++i) {
-    var xPos = i;
-    var spriteFoundThisX = false;
-    var writtenTo = false;
-    var minDistToNext = 256;
-    for (var k = 0; k < sprites.length; k++) {
-      var sprite = sprites[k];
-      var offset = xPos - sprite[0];
-
-      if (offset < 0) {
-        var distToSprite = -offset;
-
-        if (distToSprite < minDistToNext) minDistToNext = distToSprite;
-        continue;
+  vdp_hblank() {
+    const firstDisplayLine = 3 + 13 + 54;
+    const pastEndDisplayLine = firstDisplayLine + 192;
+    const endOfFrame = pastEndDisplayLine + 48 + 3;
+    if (this.vdp_current_line === firstDisplayLine) this.vdp_hblank_counter = this.vdp_regs[10];
+    if (this.vdp_current_line >= firstDisplayLine && this.vdp_current_line < pastEndDisplayLine) {
+      this.rasterize_line(this.vdp_current_line - firstDisplayLine);
+      if (--this.vdp_hblank_counter < 0) {
+        this.vdp_hblank_counter = this.vdp_regs[10];
+        this.vdp_pending_hblank = true;
       }
-      if (offset >= 8) continue;
-      spriteFoundThisX = true;
-      var spriteLine = line - sprite[2];
-      var spriteAddr = spriteBase + sprite[1] * 32 + spriteLine * 4;
-      var untwiddledAddr = spriteAddr * 2 + offset;
-      var index = vramUntwiddled[untwiddledAddr];
-      if (index === 0) {
-        continue;
+    }
+    this.vdp_current_line++;
+    var needIrq = 0;
+    if (this.vdp_current_line === endOfFrame) {
+      this.vdp_current_line = 0;
+      this.vdp_status |= 128;
+      needIrq |= 4;
+      this.currentFrame++;
+      if (this.borderColourCss) {
+        this.core.canvas.style.borderColor = this.borderColourCss;
+        this.borderColourCss = null;
       }
-      if (writtenTo) {
-        vdp_status |= 0x20;
-        break;
-      }
-      that.fb32[lineAddr + ((pixelOffset + i - vdp_regs[8]) & 0xff)] = paletteRGB[16 + index];
-      writtenTo = true;
     }
-    if (!spriteFoundThisX && minDistToNext > 1) {
-      i += minDistToNext - 1;
+    if (this.vdp_regs[1] & 32 && this.vdp_status & 128) {
+      needIrq |= 2;
     }
-  }
-}
-
-function border_clear(lineAddr, count) {
-  lineAddr = lineAddr | 0;
-  count = count | 0;
-  const borderIndex = 16 + (vdp_regs[7] & 0xf);
-  const borderRGB = paletteRGB[borderIndex];
-  for (var i = 0; i < count; i++) that.fb32[lineAddr + i] = borderRGB;
-}
-
-function rasterize_line(line) {
-  line = line | 0;
-  const lineAddr = (line * 256) | 0;
-  if ((vdp_regs[1] & 64) === 0) {
-    border_clear(lineAddr, 256);
-    return;
-  }
-
-  var effectiveLine = line + vdp_regs[9];
-  if (effectiveLine >= 224) {
-    effectiveLine -= 224;
-  }
-  const sprites = findSprites(line);
-  const pixelOffset = vdp_regs[0] & 64 && line < 16 ? 0 : vdp_regs[8];
-  const nameAddr = ((vdp_regs[2] << 10) & 0x3800) + (effectiveLine >>> 3) * 64;
-  const yMod = effectiveLine & 7;
-
-  rasterize_background_line(lineAddr, pixelOffset, nameAddr, yMod);
-  if (sprites.length) rasterize_sprites(line, lineAddr, pixelOffset, sprites);
-  rasterize_foreground_line(lineAddr, pixelOffset, nameAddr, yMod);
-
-  if (vdp_regs[0] & (1 << 5)) {
-    border_clear(lineAddr, 8);
-  }
-}
-
-function vdp_frame_hook() {}
-
-var currentFrame = 1;
-function vdp_hblank() {
-  const firstDisplayLine = 3 + 13 + 54;
-  const pastEndDisplayLine = firstDisplayLine + 192;
-  const endOfFrame = pastEndDisplayLine + 48 + 3;
-  if (vdp_current_line === firstDisplayLine) vdp_hblank_counter = vdp_regs[10];
-  if (vdp_current_line >= firstDisplayLine && vdp_current_line < pastEndDisplayLine) {
-    rasterize_line(vdp_current_line - firstDisplayLine);
-    if (--vdp_hblank_counter < 0) {
-      vdp_hblank_counter = vdp_regs[10];
-      vdp_pending_hblank = true;
+    if (this.vdp_regs[0] & 16 && this.vdp_pending_hblank) {
+      needIrq |= 1;
     }
+    return needIrq;
   }
-  vdp_current_line++;
-  var needIrq = 0;
-  if (vdp_current_line === endOfFrame) {
-    vdp_current_line = 0;
-    vdp_status |= 128;
-    needIrq |= 4;
-    currentFrame++;
-    vdp_frame_hook(currentFrame);
-    if (borderColourCss) {
-      that.canvas.style.borderColor = borderColourCss;
-      borderColourCss = null;
+  vdp_init() {
+    this.vdp_reset();
+  }
+  vdp_reset() {
+    for (var i = 0x0000; i < 0x4000; i++) {
+      this.vram[i] = 0;
     }
+    for (i = 0; i < 32; i++) {
+      this.paletteR[i] = this.paletteG[i] = this.paletteB[i] = this.paletteRGB[i] = this.palette[i] = 0;
+    }
+    for (i = 0; i < 16; i++) {
+      this.vdp_regs[i] = 0;
+    }
+    for (i = 2; i <= 5; i++) {
+      this.vdp_regs[i] = 0xff;
+    }
+    this.vdp_regs[6] = 0xfb;
+    this.vdp_regs[10] = 0xff;
+    this.vdp_current_line = this.vdp_status = this.vdp_hblank_counter = 0;
+    this.vdp_mode_select = 0;
   }
-  if (vdp_regs[1] & 32 && vdp_status & 128) {
-    needIrq |= 2;
+  vdp_get_line() {
+    return (this.vdp_current_line - 64) & 0xff;
   }
-  if (vdp_regs[0] & 16 && vdp_pending_hblank) {
-    needIrq |= 1;
+  vdp_get_x() {
+    return 0;
   }
-  return needIrq;
-}
-
-function vdp_init() {
-  vram = new Uint8Array(0x4000);
-  vramUntwiddled = new Uint8Array(0x8000);
-  palette = new Uint8Array(32);
-  paletteR = new Uint8Array(32);
-  paletteG = new Uint8Array(32);
-  paletteB = new Uint8Array(32);
-  paletteRGB = new Uint32Array(32);
-  vdp_regs = new Uint8Array(16);
-  vdp_reset();
-}
-
-function vdp_reset() {
-  for (var i = 0x0000; i < 0x4000; i++) {
-    vram[i] = 0;
-  }
-  for (i = 0; i < 32; i++) {
-    paletteR[i] = paletteG[i] = paletteB[i] = paletteRGB[i] = palette[i] = 0;
-  }
-  for (i = 0; i < 16; i++) {
-    vdp_regs[i] = 0;
-  }
-  for (i = 2; i <= 5; i++) {
-    vdp_regs[i] = 0xff;
-  }
-  vdp_regs[6] = 0xfb;
-  vdp_regs[10] = 0xff;
-  vdp_current_line = vdp_status = vdp_hblank_counter = 0;
-  vdp_mode_select = 0;
-}
-
-function vdp_get_line() {
-  return (vdp_current_line - 64) & 0xff;
-}
-
-function vdp_get_x() {
-  return 0;
 }

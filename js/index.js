@@ -1,5 +1,4 @@
 const segams = new SEGAMS("output");
-const that = segams;
 
 document.getElementById("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];

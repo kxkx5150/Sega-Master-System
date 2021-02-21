@@ -23,11 +23,12 @@ class SEGAMS {
     this.mem = new RAM(this);
     this.rom = new ROM(this);
     this.sound =  new SOUND(this);
-    this.cpu = new CPU(this,this.mem)
+    this.vdp = new VDP(this);
+    this.cpu = new CPU(this,this.mem);
   }
   init() {
     this.cpu.z80_init();
-    vdp_init();
+    this.vdp.vdp_init();
     this.audio_init();
     this.reset();
   }
@@ -68,7 +69,7 @@ class SEGAMS {
 
     let cb = this.sound.polltime.bind(this)
     this.cpu.z80_do_opcodes(cb);
-    var vdp_status = vdp_hblank();
+    var vdp_status = this.vdp.vdp_hblank();
     var irq = vdp_status & 3;
     this.cpu.z80_set_irq(irq);
     if (vdp_status & 4) {
@@ -83,7 +84,7 @@ class SEGAMS {
     this.tstates = 0;
     this.lastFrame = null;
 
-    vdp_reset();
+    this.vdp.vdp_reset();
     this.audio_reset();
     this.cpu.z80_reset();
     this.io.reset();

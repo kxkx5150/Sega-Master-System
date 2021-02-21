@@ -1,5 +1,5 @@
 class IO {
-  constructor(core){
+  constructor(core) {
     this.core = core;
     this.inputMode = 7;
     this.joystick = 0xffff;
@@ -8,9 +8,9 @@ class IO {
     addr &= 0xff;
     switch (addr) {
       case 0x7e:
-        return vdp_get_line();
+        return this.core.vdp.vdp_get_line();
       case 0x7f:
-        return vdp_get_x();
+        return this.core.vdp.vdp_get_x();
       case 0xdc:
       case 0xc0:
         return this.joystick & 0xff;
@@ -18,10 +18,10 @@ class IO {
       case 0xc1:
         return (this.joystick >> 8) & 0xff;
       case 0xbe:
-        return vdp_readbyte();
+        return this.core.vdp.vdp_readbyte();
       case 0xbd:
       case 0xbf:
-        return vdp_readstatus();
+        return this.core.vdp.vdp_readstatus();
       case 0xde:
         return 0xff;
       case 0xdf:
@@ -50,10 +50,10 @@ class IO {
         break;
       case 0xbd:
       case 0xbf:
-        vdp_writeaddr(val);
+        this.core.vdp.vdp_writeaddr(val);
         break;
       case 0xbe:
-        vdp_writebyte(val);
+        this.core.vdp.vdp_writebyte(val);
         break;
       case 0xde:
         this.inputMode = val;
@@ -70,7 +70,7 @@ class IO {
         break;
     }
   }
-  reset(){
+  reset() {
     this.inputMode = 7;
     this.joystick = 0xffff;
   }
