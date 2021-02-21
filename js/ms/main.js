@@ -15,17 +15,37 @@ class SEGAMS {
     this.lastFrame = null;
     this.timerID1 = null;
     this.timerID2 = null;
+    this.interval = 0;
     this.info = {
       cpu:false,
       mem:false,
     }
+    this.INPUT = {
+      A: 16,
+      B: 32,
+      UP: 1,
+      DOWN: 2,
+      LEFT: 4,
+      RIGHT: 8,
+    };
     this.io = new IO(this);
     this.mem = new RAM(this);
     this.rom = new ROM(this);
     this.sound =  new SOUND(this);
     this.vdp = new VDP(this);
     this.cpu = new CPU(this,this.mem);
+    this.gamepad = new GAMEPAD(this);
     this.audio_init();
+  }
+  keyDown(player, button) {
+    if (player === 1) {
+      this.io.joystick &= ~button;
+    }
+  }
+  keyUp(player, button) {
+    if (player === 1) {
+      this.io.joystick |= button;
+    }
   }
   init() {
     this.cpu.z80_init();
@@ -74,6 +94,8 @@ class SEGAMS {
     var irq = vdp_status & 3;
     this.cpu.z80_set_irq(irq);
     if (vdp_status & 4) {
+      if(this.interval % 3 === 0)this.gamepad.updateGamepad();
+      this.interval++;
       this.ctx.putImageData(this.imageData, 0, 0);
       return true;
     }

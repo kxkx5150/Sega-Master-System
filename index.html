@@ -1,42 +1,85 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
   <head>
-    <title></title>
     <meta charset="UTF-8" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Cache-Control" content="no-cache" />
     <meta name="author" content="Kunihiro Ando" />
-    <link rel="stylesheet" href="./css/style.css" type="text/css" />
+    <title>Sega-Master-System.js</title>
+    <link href="css/style.css" rel="stylesheet" />
   </head>
   <body>
     <div class="ctrl_div">
-      <input type="file" id="fileInput" />
-    </div>
-    <div class="container">
-      <div class="main" id="holder">
-        <canvas id="output" width="256" height="192"></canvas>
+      <div id="input-group">
+        <label class="github"
+          ><a href="https://github.com/kxkx5150/Sega-Master-System"
+            >https://github.com/kxkx5150/Sega-Master-System</a
+          ></label
+        >
+        <span id="gamepad_info"></span><img src="./img/options.png" id="setteings" />
+        <input type="file" name="file" id="fileInput" class="inputfile" />
+        <label for="fileInput" class="button">Choose a file</label>
+        <input type="range" id="speed" name="speed" min="1" max="7" step="1" value="4"style="display: none" />
+        <label for="speed" style="padding-right: 18px;display: none">Speed</label>
+        <button id="pauseButton" class="button" style="display: none">Pause/Play</button>
+        <button id="resetButton" class="button" style="display: none">Reset</button>
+        <button id="saveButton" class="button" style="display: none">Save</button>
+        <button id="loadButton" class="button" style="display: none">Load</button>
       </div>
     </div>
-    <div>
-      <!--
-        Copyright (c) 安東　邦泰
-        Kunihiro Ando
-        Released under the GNU General Public License
-        https://licenses.opensource.jp/GPL-2.0/gpl/gpl.ja.txt
+    <canvas id="output" width="256" height="192"></canvas>
+  </div>
+  <!--
+    Copyright (c) 安東　邦泰
+    Kunihiro Ando
+    Released under the GNU General Public License
+    https://licenses.opensource.jp/GPL-2.0/gpl/gpl.ja.txt
 
-        This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <https://www.gnu.org/licenses/>.
-      -->
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+  </div>
+
+    <div id="settingdiv" style="display: none" class="warpdiv">
+      <div id="setting_container" class="warpcontainer" style="text-align: center">
+        <h3 class="lbl">Settings</h3>
+        <div>
+          <div class="keyhelp">
+            <label>A :</label> A<br>
+            <label>B :</label> Z<br>
+          </div>
+        </div>
+        <h3 class="lbl">Gamepad</h3>
+        <div style="font-size: 18px;color:crimson">Please set rom !</div>
+        <div id="gamepad_cont">
+          <div id="gamepad_name">Controller disconnected</div>
+          <div id="gamepad_presse_button">press button : </div>
+          <div class="keyhelp" id="gamepad_button_container">
+            <div class="button_div" style="display: none;">
+              <label>START :</label><select id="start_button"></select>
+            </div>
+            <div class="button_div" style="display: none;">
+              <label>SELRCT :</label><select id="select_button"></select><br>
+            </div>
+            <div class="button_div">
+              <label>A :</label><select id="a_button"></select><br>
+            </div>
+            <div class="button_div">
+              <label>B :</label><select id="b_button"></select><br>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <script type="text/javascript" src="./js/ms/mem.js"></script>
     <script type="text/javascript" src="./js/ms/io.js"></script>
@@ -44,6 +87,7 @@
     <script type="text/javascript" src="./js/ms/vdp.js"></script>
     <script type="text/javascript" src="./js/ms/sound.js"></script>
     <script type="text/javascript" src="./js/ms/cpu.js"></script>
+    <script type="text/javascript" src="./js/ms/gamepad.js"></script>
     <script type="text/javascript" src="./js/ms/main.js"></script>
     <script type="text/javascript" src="./js/index.js"></script>
   </body>
