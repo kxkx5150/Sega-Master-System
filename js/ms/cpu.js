@@ -76,7 +76,7 @@ class CPU {
       this.core.tstates += 4;
       this.z80.r = (this.z80.r + 1) & 0x7f;
       var opcode = this.mem.readbyte(this.z80.pc);
-      if (onstep) this.showInfo(this.z80.pc, opcode);
+      if (onstep && this.core.inf.cpu) this.showInfo(this.z80.pc, opcode);
       this.z80.pc = (this.z80.pc + 1) & 0xffff;
 
       this.z80_base_ops(opcode);

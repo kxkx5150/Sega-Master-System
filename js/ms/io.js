@@ -46,7 +46,7 @@ class IO {
         break;
       case 0x7e:
       case 0x7f:
-        this.core.soundChip.poke(val);
+        this.core.sound.poke(val);
         break;
       case 0xbd:
       case 0xbf:

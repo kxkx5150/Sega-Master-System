@@ -1,7 +1,5 @@
 class SEGAMS {
   constructor(canvas_id) {
-    this.tstates = 0;
-    this.event_next_event;
     this.canvas = document.getElementById(canvas_id);
     this.ctx = this.canvas.getContext("2d");
     this.imageData = this.ctx.getImageData(0, 0, 256, 192);
@@ -9,8 +7,11 @@ class SEGAMS {
     this.actx = new AudioContext();
     this.fps = 60;
     this.cpuHz = 3.58 * 1000 * 1000;
+    this.sampleRate = this.actx.sampleRate;
     this.tstatesPerHblank = Math.ceil(this.cpuHz / (313 * this.fps)) | 0;
     this.targetTimeout = 1000 / this.fps;
+    this.tstates = 0;
+    this.event_next_event;
     this.lastFrame = null;
     this.timerID1 = null;
     this.timerID2 = null;
@@ -22,7 +23,7 @@ class SEGAMS {
     this.io = new IO(this);
     this.mem = new RAM(this);
     this.rom = new ROM(this);
-    this.soundChip = null;
+    this.sound =  new SOUND(this);
     this.cpu = new CPU(this,this.mem)
   }
   init() {
@@ -66,7 +67,7 @@ class SEGAMS {
     this.event_next_event = this.tstatesPerHblank;
     this.tstates -= this.tstatesPerHblank;
 
-    let cb = this.soundChip.polltime.bind(this)
+    let cb = this.sound.polltime.bind(this)
     this.cpu.z80_do_opcodes(cb);
     var vdp_status = vdp_hblank();
     var irq = vdp_status & 3;
@@ -94,18 +95,16 @@ class SEGAMS {
     var sp = this.actx.createScriptProcessor(1024, 0, 1);
     sp.addEventListener("audioprocess", this.pumpAudio.bind(this));
     sp.connect(this.actx.destination, 0, 0);
-    const chip = new SoundChip(this.actx.sampleRate, this.cpuHz);
-    this.soundChip = chip;
   }
   pumpAudio(e) {
     var chan = e.outputBuffer.getChannelData(0);
-    this.soundChip.render(chan, 0, chan.length);
+    this.sound.render(chan, 0, chan.length);
   }
   audio_enable(enable) {
-    this.soundChip.enable(enable);
+    this.sound.enable(enable);
     if (this.actx) this.actx.resume();
   }
   audio_reset() {
-    this.soundChip.reset();
+    this.sound.reset();
   }
 }
