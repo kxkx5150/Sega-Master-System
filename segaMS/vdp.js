@@ -132,7 +132,7 @@ function vdp_readstatus() {
 
   vdp_status &= 0x1f;
   vdp_pending_hblank = false;
-  z80_set_irq(false);
+  that.cpu.z80_set_irq(false);
   vdp_addr_state = 0;
   return res;
 }

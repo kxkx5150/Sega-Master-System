@@ -7,13 +7,13 @@ class SEGAMS {
     this.imageData = this.ctx.getImageData(0, 0, 256, 192);
     this.fb32 = new Uint32Array(this.imageData.data.buffer);
     this.actx = new AudioContext();
-
     this.fps = 60;
     this.cpuHz = 3.58 * 1000 * 1000;
     this.tstatesPerHblank = Math.ceil(this.cpuHz / (313 * this.fps)) | 0;
     this.targetTimeout = 1000 / this.fps;
     this.lastFrame = null;
-
+    this.timerID1 = null;
+    this.timerID2 = null;
     this.info = {
       cpu:true,
       mem:false,
@@ -23,36 +23,20 @@ class SEGAMS {
     this.mem = new RAM(this);
     this.rom = new ROM(this);
     this.soundChip = null;
-
-
+    this.cpu = new CPU(this,this.mem)
   }
-  miracle_init() {
-    z80_init();
+  init() {
+    this.cpu.z80_init();
     vdp_init();
     this.audio_init();
-    this.miracle_reset();
+    this.reset();
   }
   loadRom(bin) {
-    this.miracle_init();
+    this.init();
     this.rom.load(bin);
     this.audio_enable(true);
     this.run();
-    // this.runCPUTest();
   }
-
-
-
-
-  runCPUTest(){
-    for (let i = 0; i < 100; i++) {
-      this.cpu.run_instruction();
-      var cb = function(){}
-      z80_do_opcodes(cb,true);
-    }
-  }
-
-
-
   run() {
     var now = Date.now();
     var atimeout = this.targetTimeout;
@@ -64,7 +48,7 @@ class SEGAMS {
       }
     }
     this.lastFrame = now;
-    setTimeout(() => {
+    this.timerID1 = setTimeout(() => {
       this.run();
     }, atimeout);
 
@@ -72,7 +56,7 @@ class SEGAMS {
       for (var i = 0; i < 20; ++i) {
         if (this.line()) return;
       }
-      setTimeout(() => {
+      this.timerID2 = setTimeout(() => {
         runner();
       }, atimeout);
     };
@@ -83,23 +67,25 @@ class SEGAMS {
     this.tstates -= this.tstatesPerHblank;
 
     let cb = this.soundChip.polltime.bind(this)
-    z80_do_opcodes(cb);
-
+    this.cpu.z80_do_opcodes(cb);
     var vdp_status = vdp_hblank();
     var irq = vdp_status & 3;
-
-    z80_set_irq(irq);
-
+    this.cpu.z80_set_irq(irq);
     if (vdp_status & 4) {
       this.ctx.putImageData(this.imageData, 0, 0);
       return true;
     }
     return false;
   }
-  miracle_reset() {
-    z80_reset();
+  reset() {
+    clearTimeout(this.timerID1);
+    clearTimeout(this.timerID2);
+    this.tstates = 0;
+    this.lastFrame = null;
+
     vdp_reset();
     this.audio_reset();
+    this.cpu.z80_reset();
     this.io.reset();
     this.mem.reset();
     this.rom.reset();
