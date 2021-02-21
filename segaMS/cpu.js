@@ -74,15 +74,13 @@ class CPU {
       }
       var oldTstates = this.core.tstates;
       this.core.tstates += 4;
-
       this.z80.r = (this.z80.r + 1) & 0x7f;
       var opcode = this.mem.readbyte(this.z80.pc);
       if (onstep) this.showInfo(this.z80.pc, opcode);
       this.z80.pc = (this.z80.pc + 1) & 0xffff;
 
       this.z80_base_ops(opcode);
-      cb(this.core.tstates + oldTstates);
-
+      cb(this.core.tstates - oldTstates);
       if (onstep) break;
     }
   }
