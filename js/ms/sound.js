@@ -11,8 +11,7 @@ class SOUND {
     this.enabled = true;
     this.volumeTable = [];
     var f = 1.0;
-    var i;
-    for (i = 0; i < 16; ++i) {
+    for(var i = 0; i < 16; ++i) {
       this.volumeTable[i] = f / this.generators.length;
       f *= Math.pow(10, -0.1);
     }
@@ -22,12 +21,12 @@ class SOUND {
       var reg = this.register[channel],
         vol = this.volume[channel];
       if (reg <= 1) {
-        for (i = 0; i < length; ++i) {
+        for(var i = 0; i < length; ++i) {
           out[i + offset] += vol;
         }
         return;
       }
-      for (i = 0; i < length; ++i) {
+      for(var i = 0; i < length; ++i) {
         this.counter[channel] -= this.sampleDecrement;
         if (this.counter[channel] < 0) {
           this.counter[channel] += reg;
@@ -49,7 +48,7 @@ class SOUND {
         out[i + offset] += this.lfsr & 1 ? vol : -vol;
       }
     };
-    for (i = 0; i < 3; ++i) {
+    for(var i = 0; i < 3; ++i) {
       this.generators[i] = this.toneChannel.bind(this);
     }
     this.generators[3] = this.noiseChannel.bind(this);
@@ -111,7 +110,7 @@ class SOUND {
       }
       offset += fromBuffer;
       length -= fromBuffer;
-      for (i = fromBuffer; i < this.position; ++i) {
+      for(var i = fromBuffer; i < this.position; ++i) {
         this.buffer[i - fromBuffer] = this.buffer[i];
       }
       this.position -= fromBuffer;
@@ -123,11 +122,11 @@ class SOUND {
       offset = offset | 0;
       length = length | 0;
       var i;
-      for (i = 0; i < length; ++i) {
+      for(var i = 0; i < length; ++i) {
         out[i + offset] = 0.0;
       }
       if (!this.enabled) return;
-      for (i = 0; i < 4; ++i) {
+      for(var i = 0; i < 4; ++i) {
         this.generators[i](i, out, offset, length);
       }
     }
