@@ -1,3 +1,4 @@
+'use strict';
 class ROM{
   constructor(core){
     this.core = core;

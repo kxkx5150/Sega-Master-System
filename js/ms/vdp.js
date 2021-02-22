@@ -1,3 +1,4 @@
+'use strict';
 class VDP {
   constructor(core) {
     this.core = core;

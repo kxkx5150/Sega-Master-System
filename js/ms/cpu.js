@@ -1,3 +1,4 @@
+'use strict';
 class CPU {
   constructor(core, mem) {
     this.core = core;

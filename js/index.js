@@ -1,5 +1,5 @@
+'use strict';
 const segams = new SEGAMS("output");
-
 document.getElementById("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -48,7 +48,7 @@ const checkKeyMap = (e, up) => {
     e.preventDefault();
   }
 };
-resizeCanvas = () => {
+const resizeCanvas = () => {
   setTimeout(() => {
     let canvas = document.getElementById("output");
     const wh = window.innerHeight;

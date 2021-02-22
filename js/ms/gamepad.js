@@ -1,3 +1,4 @@
+'use strict';
 class GAMEPAD {
   constructor(core) {
     this.core = core;

@@ -1,3 +1,4 @@
+'use strict';
 class IO {
   constructor(core) {
     this.core = core;

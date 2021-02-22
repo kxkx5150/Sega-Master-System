@@ -1,3 +1,4 @@
+'use strict';
 class SEGAMS {
   constructor(canvas_id) {
     this.canvas = document.getElementById(canvas_id);
