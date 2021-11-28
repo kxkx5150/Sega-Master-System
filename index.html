@@ -89,5 +89,22 @@
     <script type="text/javascript" src="./js/ms/gamepad.js"></script>
     <script type="text/javascript" src="./js/ms/main.js"></script>
     <script type="text/javascript" src="./js/index.js"></script>
+	<script type="text/javascript">
+		const ROM_TO_LOAD = 'roms/astro_hunter-0.2.sms';
+	
+		document.addEventListener("DOMContentLoaded", function(event) { 
+			fetch(ROM_TO_LOAD)
+			.then(response => response.blob())
+			.then((blob) => {
+				console.info('Blob', blob);
+
+				const fileReader = new FileReader();
+				fileReader.onload = (e) => {
+					segams.loadRom(e.target.result);
+				};
+				fileReader.readAsBinaryString(blob);
+			});			
+		});
+	</script>
   </body>
 </html>
