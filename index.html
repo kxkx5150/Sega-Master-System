@@ -11,14 +11,15 @@
   <body>
     <div class="ctrl_div">
       <div id="input-group">
-        <label class="github"
-          ><a href="https://github.com/kxkx5150/Sega-Master-System"
+        <label>
+		  Emulator used:
+		  <a href="https://github.com/kxkx5150/Sega-Master-System"
             >https://github.com/kxkx5150/Sega-Master-System</a
-          ></label
-        >
+          >
+		</label>
         <span id="gamepad_info"></span><img src="./img/options.png" id="setteings" />
         <input type="file" name="file" id="fileInput" class="inputfile" />
-        <label for="fileInput" class="button">Choose a file</label>
+        <label for="fileInput" class="button" style="display: none">Choose a file</label>
         <input type="range" id="speed" name="speed" min="1" max="7" step="1" value="4"style="display: none" />
         <label for="speed" style="padding-right: 18px;display: none">Speed</label>
         <button id="pauseButton" class="button" style="display: none">Pause/Play</button>

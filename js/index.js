@@ -35,7 +35,9 @@ const ctrlMap = {
   arrowleft: segams.INPUT.LEFT,
   arrowdown: segams.INPUT.DOWN,
   arrowup: segams.INPUT.UP,
-  z: segams.INPUT.B,
+  x: segams.INPUT.B,
+  z: segams.INPUT.A,
+  s: segams.INPUT.B,
   a: segams.INPUT.A,
 };
 const checkKeyMap = (e, up) => {
